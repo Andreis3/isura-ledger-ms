@@ -1,0 +1,34 @@
+name: Golang Build and Test
+
+on:
+  push:
+    branches-ignore:
+      - master
+      - main
+
+jobs:
+  build-test:
+    name: Build and Test
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: ['1.26.1']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup up Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install Dependencies Application
+        run:  go mod download
+
+      - name: Install Ginkgo
+        run: go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
+
+      - name: Test Unit Cover
+        run: make unit-cover
