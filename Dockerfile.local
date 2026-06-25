@@ -1,0 +1,17 @@
+FROM golang:1.26.1-alpine
+
+WORKDIR /app
+
+# Instala o Air
+RUN go install github.com/air-verse/air@latest
+
+# Instala dependências necessárias para o build (musl para compatibilidade)
+RUN apk add --no-cache gcc musl-dev
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# O Air usará o .air.toml para saber como buildar e rodar
+CMD ["air", "-c", ".air.toml"]
