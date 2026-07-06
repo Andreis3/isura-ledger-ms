@@ -12,12 +12,12 @@ table "outbox_events" {
   }
 
   column "aggregate_type" {
-    type = varchar(10)
+    type = varchar(50)
     null = false
   }
 
   column "event_type" {
-    type = varchar(15)
+    type = varchar(50)
     null = false
   }
 
@@ -27,7 +27,7 @@ table "outbox_events" {
   }
 
   column "status" {
-    type = varchar(10)
+    type = varchar(50)
     null = false
   }
 
