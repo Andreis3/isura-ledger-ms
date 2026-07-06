@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/andreis3/isura-ledger-ms/internal/application/command"
+	"github.com/andreis3/isura-ledger-ms/internal/transport/grpc/handler"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
@@ -21,36 +23,35 @@ type GRPCServer struct {
 
 func NewGRPCServer(
 	deps *BaseDeps,
-	ledgerServer *grpcTransport.LedgerServer,
 ) *GRPCServer {
-	start := time.Now()
-
-	// gRPC server com interceptors
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			interceptor.LoggingInterceptor(deps.Log.SlogJSON()),
-			interceptor.MetricsInterceptor(deps.Prom),
-			interceptor.TracingInterceptor(deps.Tracer),
-		),
-	)
-
-	// registra todos os módulos
-	registry := grpcTransport.NewServerRegistry(grpcServer, grpcTransport.NewLedgerModule(ledgerServer))
-	registry.RegisterAll()
-	reflection.Register(grpcServer)
-
-	deps.Log.InfoText("GRPC server started",
-		slog.String("port", deps.Cfg.Servers.GRPC.Port),
-		slog.String("startup_time", time.Since(start).String()),
-	)
 
 	return &GRPCServer{
-		deps:       deps,
-		grpcServer: grpcServer,
+		deps: deps,
 	}
 }
 
 func (s *GRPCServer) Start() {
+	start := time.Now()
+
+	// GRPC server com interceptors
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptor.LoggingInterceptor(s.deps.Log.SlogJSON()),
+			interceptor.MetricsInterceptor(s.deps.Prom),
+			interceptor.TracingInterceptor(s.deps.Tracer),
+		),
+	)
+
+	// registra todos os módulos
+	registry := grpcTransport.NewServerRegistry(grpcServer, grpcTransport.NewLedgerModule(s.buildLedgerServer()))
+	registry.RegisterAll()
+	reflection.Register(grpcServer)
+
+	s.deps.Log.InfoText("GRPC server started",
+		slog.String("port", s.deps.Cfg.Servers.GRPC.Port),
+		slog.String("startup_time", time.Since(start).String()),
+	)
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", s.deps.Cfg.Servers.GRPC.Port))
 	if err != nil {
 		s.deps.Log.CriticalText("grpc server failed to listen",
@@ -58,11 +59,30 @@ func (s *GRPCServer) Start() {
 		os.Exit(1)
 	}
 
-	if err := s.grpcServer.Serve(lis); err != nil {
+	if err := grpcServer.Serve(lis); err != nil {
 		s.deps.Log.CriticalText("grpc server failed to serve",
 			slog.String("error", err.Error()))
 		os.Exit(1)
 	}
+}
+
+func (s *GRPCServer) buildLedgerServer() *grpcTransport.LedgerServer {
+
+	composer := NewComposer(s.deps)
+
+	accountRepo := composer.BuildAccountRepo()
+
+	// use cases
+	createAccount := command.NewCreateAccount(accountRepo, s.deps.Log, s.deps.Tracer)
+
+	// handlers
+	createAccountHandler := handler.NewCreateAccountHandler(createAccount, s.deps.Log, s.deps.Tracer)
+
+	// server
+	ledgerServer := grpcTransport.NewLedgerServer(createAccountHandler)
+
+	// server
+	return ledgerServer
 }
 
 func (s *GRPCServer) Stop() {
