@@ -1,0 +1,30 @@
+{
+  "application_name": "isura-ledger-ms",
+  "env": "xxxx",
+  "servers" :{
+    "grpc": {
+      "port": "xxx"
+    },
+    "http": {
+      "port": "xxx"
+    }
+  },
+  "data_base": {
+    "postgres": {
+      "host": "localhost",
+      "port": 5432,
+      "user": "xxxx",
+      "password": "xxxx",
+      "database": "isura-ledger",
+      "ssl_mode": "disable",
+      "max_connections": 10,
+      "min_connections": 1,
+      "max_conn_lifetime": "5m",
+      "max_conn_idle_time": "1m"
+    }
+  },
+  "open_telemetry": {
+    "host": "localhost:4318"
+  },
+  "version": "1.0.0"
+}
