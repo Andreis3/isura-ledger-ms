@@ -4,21 +4,24 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
-	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 )
 
 var ErrAccountAlreadyExists = errors.New("account already exists")
 
 type CreateAccountInput struct {
-	ExternalID     string
-	AccountingType string
-	Currency       string
+	OwnerID           string
+	AccountExternalID string
+	AccountNumber     string
+	TaxID             string
+	AccountingType    string
+	Currency          string
 }
 
 type CreateAccount struct {
@@ -49,12 +52,23 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 		slog.Any("input", MaskInput[CreateAccountInput](input)),
 	)
 
-	existing, err := c.accountRepository.FindByExternalID(ctx, input.ExternalID)
+	accountEntity, err := c.validate(input)
+	if err != nil {
+		span.RecordError(err)
+		c.log.CriticalJSON("CreateAccount failed to validate",
+			append([]any{
+				slog.String("trace_id", tracerID)},
+				fault.Attrs(err)...)...,
+		)
+		return "", err
+	}
+
+	existing, err := c.accountRepository.FindByAccountExternalID(ctx, accountEntity.AccountExternalID)
 	if err != nil && !errors.Is(err, account.ErrAccountNotFound) {
 		c.log.CriticalJSON("CreateAccount failed to find account by external ID",
 			append([]any{
 				slog.String("trace_id", tracerID),
-				slog.String("external_id", input.ExternalID)},
+				slog.String("account_external_id", accountEntity.AccountExternalID)},
 				fault.Attrs(err)...)...,
 		)
 		return "", err
@@ -65,25 +79,19 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 		c.log.WarnJSON("CreateAccount account already exists",
 			append([]any{
 				slog.String("trace_id", tracerID),
-				slog.String("external_id", input.ExternalID)},
+				slog.String("account_external_id", accountEntity.AccountExternalID)},
 				fault.Attrs(domainErr)...)...,
 		)
-		return "", domainErr
+		return string(existing.ID), nil
 	}
 
 	accountID := account.AccountID(uuid.New().String())
 
-	accountEntity, err := account.NewAccount(
-		accountID,
-		input.ExternalID,
-		account.AccountType(input.AccountingType),
-		money.Currency(input.Currency),
-	)
 	if err != nil {
 		c.log.CriticalJSON("CreateAccount failed to create account entity",
 			append([]any{
 				slog.String("trace_id", tracerID),
-				slog.String("external_id", input.ExternalID)},
+				slog.String("account_external_id", accountEntity.AccountExternalID)},
 				fault.Attrs(err)...)...,
 		)
 		return "", err
@@ -94,7 +102,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 		c.log.CriticalJSON("CreateAccount failed to save account",
 			append([]any{
 				slog.String("trace_id", tracerID),
-				slog.String("external_id", input.ExternalID)},
+				slog.String("account_external_id", accountEntity.AccountExternalID)},
 				fault.Attrs(err)...)...,
 		)
 		return "", err
@@ -103,8 +111,25 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 	c.log.InfoJSON("CreateAccount account created successfully",
 		slog.String("trace_id", tracerID),
 		slog.String("account_id", string(accountID)),
-		slog.String("external_id", input.ExternalID),
+		slog.String("account_external_id", accountEntity.AccountExternalID),
 	)
 
 	return string(accountID), nil
+}
+
+func (c *CreateAccount) validate(input CreateAccountInput) (*account.Account, error) {
+	id := uuid.New().String()
+	now := time.Now()
+
+	return account.NewAccountBuilder().
+		WithID(id).
+		WithOwnerID(input.OwnerID).
+		WithAccountExternalID(input.AccountExternalID).
+		WithAccountNumber(input.AccountNumber).
+		WithTaxID(input.TaxID).
+		WithAccountType(input.AccountingType).
+		WithCurrency(input.Currency).
+		WithCreatedAt(now).
+		WithUpdatedAt(now).
+		Build()
 }

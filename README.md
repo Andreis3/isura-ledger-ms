@@ -219,7 +219,7 @@ Accounting representation of a bank account within the ledger. Not the same as t
 ```
 Account {
   ID             AccountID
-  ExternalID     string      // ID from isura-account-ms (correlation key)
+  AccountExternalID     string      // ID from isura-account-ms (correlation key)
   AccountingType ASSET | LIABILITY | REVENUE | EXPENSE
   Balance        Money
   CreatedAt      time.Time

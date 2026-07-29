@@ -2,39 +2,78 @@ package server
 
 import (
 	"context"
-	"os"
+	"errors"
+	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
-func GracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, deps BaseDeps) {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	<-quit
+func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, deps BaseDeps) {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	deps.Log.InfoText("isura-ledger-ms shutting down...")
+	g, ctx := errgroup.WithContext(ctx)
 
-	// 1. para de aceitar novos requests gRPC
-	grpcSrv.Stop()
-	deps.Log.InfoText("Stop grpc server...")
+	// Goroutine para o servidor HTTP
+	g.Go(func() error {
+		// Inicia o servidor em uma goroutine separada
+		errCh := make(chan error, 1)
+		go func() {
+			deps.Log.InfoText("Starting HTTP server...")
+			if err := httpSrv.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				errCh <- err
+			}
+			close(errCh)
+		}()
 
-	// 2. para o HTTP com timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	httpSrv.Stop(ctx)
-	deps.Log.InfoText("Stop http server...")
+		// Aguarda o contexto ser cancelado ou erro no servidor
+		select {
+		case <-ctx.Done():
+			deps.Log.InfoText("Shutting down HTTP server...")
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			return httpSrv.Shutdown(shutdownCtx) // Isso para o servidor
+		case err := <-errCh:
+			return err
+		}
+	})
 
-	// 3. fecha infraestrutura — só depois que os servers pararam
+	// Goroutine para o servidor gRPC
+	g.Go(func() error {
+		errCh := make(chan error, 1)
+		go func() {
+			deps.Log.InfoText("Starting gRPC server...")
+			if err := grpcSrv.Start(); err != nil {
+				errCh <- err
+			}
+			close(errCh)
+		}()
+
+		select {
+		case <-ctx.Done():
+			deps.Log.InfoText("Shutting down gRPC server...")
+			grpcSrv.GracefulStop()
+			return nil
+		case err := <-errCh:
+			return err
+		}
+	})
+
+	// Aguarda todos terminarem
+	if err := g.Wait(); err != nil {
+		deps.Log.InfoText("Servers stopped with error: %v", err)
+	}
+
+	// Fecha infraestrutura
+	deps.Log.InfoText("Closing infrastructure...")
+	closeCtx, closeCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer closeCancel()
 	deps.Pg.Close()
-	deps.Log.InfoText("Close connection postgres...")
-
 	deps.Prom.Close()
-	deps.Log.InfoText("Close connection prometheus...")
-
-	deps.TracerShutdown(ctx)
-	deps.Log.InfoText("Close connection tracer...")
-
-	deps.Log.InfoText("shutdown complete!")
-	os.Exit(0)
+	deps.TracerShutdown(closeCtx)
+	deps.Log.InfoText("Infrastructure closed.")
+	deps.Log.InfoText("Shutdown complete.")
 }

@@ -30,7 +30,7 @@ func NewGRPCServer(
 	}
 }
 
-func (s *GRPCServer) Start() {
+func (s *GRPCServer) Start() error {
 	start := time.Now()
 
 	// GRPC server com interceptors
@@ -62,8 +62,9 @@ func (s *GRPCServer) Start() {
 	if err := grpcServer.Serve(lis); err != nil {
 		s.deps.Log.CriticalText("grpc server failed to serve",
 			slog.String("error", err.Error()))
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
 func (s *GRPCServer) buildLedgerServer() *grpcTransport.LedgerServer {
@@ -85,6 +86,9 @@ func (s *GRPCServer) buildLedgerServer() *grpcTransport.LedgerServer {
 	return ledgerServer
 }
 
-func (s *GRPCServer) Stop() {
-	s.grpcServer.GracefulStop()
+func (s *GRPCServer) GracefulStop() {
+	if s.grpcServer != nil {
+		s.deps.Log.InfoText("GRPC server stopped")
+		s.grpcServer.GracefulStop()
+	}
 }

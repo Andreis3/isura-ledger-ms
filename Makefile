@@ -47,6 +47,15 @@ bash:
 # 6. Build + Up combinado
 restart: down build up logs
 
+# Geração de stubs Protobuf/gRPC usando Buf v2
+proto-lint:
+	@echo "Checking proto syntax with buf..."
+	@buf lint
+
+proto-gen:
+	@echo "Generating Go code from protos..."
+	@buf generate
+
 
 .PHONY: build,
 		up,
@@ -58,4 +67,6 @@ restart: down build up logs
 		unit-verbose,
 		unit-cover,
 		unit-report,
-		integration
+		integration,
+		proto-lint,
+		proto-gen

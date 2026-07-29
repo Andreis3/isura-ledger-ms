@@ -16,7 +16,6 @@ message CreateTransactionRequest {
 
 message CreateTransactionResponse {
   string transaction_id = 1;
-  string status = 2;
 }
 
 // ─── GetTransaction ───────────────────────────────────────────

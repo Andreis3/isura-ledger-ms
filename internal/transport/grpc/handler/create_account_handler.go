@@ -32,9 +32,12 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 	defer span.End()
 
 	input := command.CreateAccountInput{
-		ExternalID:     req.GetExternalId(),
-		AccountingType: req.GetAccountingType(),
-		Currency:       req.GetCurrency(),
+		OwnerID:           req.GetOwnerId(),
+		AccountExternalID: req.GetAccountNumber(),
+		AccountNumber:     req.GetAccountNumber(),
+		TaxID:             req.GetTaxId(),
+		AccountingType:    h.AccountTypeTranslate(req),
+		Currency:          h.CurrencyTranslate(req),
 	}
 
 	accountID, err := h.useCase.Execute(ctx, input)
@@ -45,4 +48,37 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 	return &pb.CreateAccountResponse{
 		AccountId: accountID,
 	}, nil
+}
+
+func (h *CreateAccountHandler) AccountTypeTranslate(req *pb.CreateAccountRequest) string {
+	switch req.GetAccountingType() {
+	case pb.AccountingType_ACCOUNTING_TYPE_ASSET:
+		return "ASSET"
+	case pb.AccountingType_ACCOUNTING_TYPE_LIABILITY:
+		return "LIABILITY"
+	case pb.AccountingType_ACCOUNTING_TYPE_EQUITY:
+		return "EQUITY"
+	case pb.AccountingType_ACCOUNTING_TYPE_REVENUE:
+		return "REVENUE"
+
+	case pb.AccountingType_ACCOUNTING_TYPE_EXPENSE:
+		return "EXPENSE"
+	default:
+		return ""
+
+	}
+}
+
+func (h *CreateAccountHandler) CurrencyTranslate(req *pb.CreateAccountRequest) string {
+	switch req.GetCurrency() {
+	case pb.Currency_CURRENCY_BRL:
+		return "BRL"
+	case pb.Currency_CURRENCY_USD:
+		return "USD"
+	case pb.Currency_CURRENCY_EUR:
+		return "EUR"
+	default:
+		return ""
+
+	}
 }
