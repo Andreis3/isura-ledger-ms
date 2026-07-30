@@ -20,6 +20,7 @@ const (
 	CodeConflict            Code = "ERR_409"
 	CodeInternal            Code = "ERR_500"
 	CodeUnprocessableEntity Code = "ERR_422"
+	CodeErrorIternalDB      Code = ""
 )
 
 // DomainError é o erro rico do domínio.

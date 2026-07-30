@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
 	"github.com/google/uuid"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
@@ -14,15 +15,6 @@ import (
 )
 
 var ErrAccountAlreadyExists = errors.New("account already exists")
-
-type CreateAccountInput struct {
-	OwnerID           string
-	AccountExternalID string
-	AccountNumber     string
-	TaxID             string
-	AccountingType    string
-	Currency          string
-}
 
 type CreateAccount struct {
 	accountRepository account.Repository
@@ -45,7 +37,7 @@ func NewCreateAccount(
 	}
 }
 
-func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (string, error) {
+func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInput) (string, error) {
 	start := time.Now()
 	ctx, span := c.tracer.Start(ctx, "CreateAccount.Execute")
 	tracerID := span.SpanContext().TraceID()
@@ -54,7 +46,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 
 	c.log.InfoJSON("CreateAccount received request",
 		slog.String("trace_id", tracerID),
-		slog.Any("input", MaskInput[CreateAccountInput](input)),
+		slog.Any("input", MaskInput[dto.CreateAccountInput](input)),
 	)
 
 	accountEntity, err := c.validate(input)
@@ -126,7 +118,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 	return string(accountID), nil
 }
 
-func (c *CreateAccount) validate(input CreateAccountInput) (*account.Account, error) {
+func (c *CreateAccount) validate(input dto.CreateAccountInput) (*account.Account, error) {
 	id := uuid.New().String()
 	now := time.Now()
 

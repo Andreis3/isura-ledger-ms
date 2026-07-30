@@ -5,6 +5,7 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/application/command"
+	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 	pb "github.com/andreis3/isura-ledger-ms/internal/transport/grpc/pb/ledger/v1"
@@ -33,7 +34,7 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 	ctx, span := h.tracer.Start(ctx, "CreateAccountHandler.Handle")
 	defer span.End()
 
-	input := command.CreateAccountInput{
+	input := dto.CreateAccountInput{
 		OwnerID:           req.GetOwnerId(),
 		AccountExternalID: req.GetAccountNumber(),
 		AccountNumber:     req.GetAccountNumber(),

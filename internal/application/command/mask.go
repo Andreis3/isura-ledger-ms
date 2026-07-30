@@ -3,11 +3,13 @@ package command
 import (
 	"fmt"
 	"log/slog"
+
+	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
 )
 
 func MaskInput[T any](input T) slog.Value {
 	switch v := any(input).(type) {
-	case CreateAccountInput:
+	case dto.CreateAccountInput:
 		return slog.GroupValue(
 			slog.String("account_external_id", v.AccountExternalID),
 			slog.String("accounting_type", v.AccountingType),
