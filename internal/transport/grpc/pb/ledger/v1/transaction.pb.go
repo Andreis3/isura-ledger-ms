@@ -100,7 +100,6 @@ func (x *CreateTransactionRequest) GetCurrency() string {
 type CreateTransactionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TransactionId string                 `protobuf:"bytes,1,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
-	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -138,13 +137,6 @@ func (*CreateTransactionResponse) Descriptor() ([]byte, []int) {
 func (x *CreateTransactionResponse) GetTransactionId() string {
 	if x != nil {
 		return x.TransactionId
-	}
-	return ""
-}
-
-func (x *CreateTransactionResponse) GetStatus() string {
-	if x != nil {
-		return x.Status
 	}
 	return ""
 }
@@ -355,10 +347,9 @@ const file_ledger_v1_transaction_proto_rawDesc = "" +
 	"\x10debit_account_id\x18\x02 \x01(\tR\x0edebitAccountId\x12*\n" +
 	"\x11credit_account_id\x18\x03 \x01(\tR\x0fcreditAccountId\x12\x16\n" +
 	"\x06amount\x18\x04 \x01(\x03R\x06amount\x12\x1a\n" +
-	"\bcurrency\x18\x05 \x01(\tR\bcurrency\"Z\n" +
+	"\bcurrency\x18\x05 \x01(\tR\bcurrency\"B\n" +
 	"\x19CreateTransactionResponse\x12%\n" +
-	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\">\n" +
+	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\">\n" +
 	"\x15GetTransactionRequest\x12%\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\"\xc9\x01\n" +
 	"\x16GetTransactionResponse\x12%\n" +

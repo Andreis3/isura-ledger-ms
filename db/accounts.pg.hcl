@@ -2,22 +2,32 @@ table "accounts" {
   schema = schema.public
 
   column "id" {
-    type = text
+    type = varchar(36)
     null = false
   }
 
-  column "external_id" {
-    type = text
+  column "owner_id" {
+    type = varchar(36)
+    null = false
+  }
+
+  column "account_external_id" {
+    type = varchar(36)
+    null = false
+  }
+
+  column "account_number" {
+    type = varchar(36)
+    null = false
+  }
+
+  column "tax_id" {
+    type = varchar(14)
     null = false
   }
 
   column "account_type" {
     type = varchar(20)
-    null = false
-  }
-
-  column "balance" {
-    type = bigint
     null = false
   }
 
@@ -40,8 +50,8 @@ table "accounts" {
     columns = [column.id]
   }
 
-  index "idx_accounts_external_id" {
-    columns = [column.external_id]
+  index "idx_account_external_currency" {
+    columns = [column.account_external_id, column.currency]
     unique  = true
   }
 }

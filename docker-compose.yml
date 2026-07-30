@@ -4,14 +4,14 @@ services:
     container_name: isura-ledger-postgres
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d isura-ledger"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d isura_ledger_main"]
       interval: 5s
       timeout: 2s
       retries: 5
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
-      POSTGRES_DB: isura-ledger
+      POSTGRES_DB: isura_ledger_main
     ports:
       - "5432:5432"
     command: ["postgres", "-c", "synchronous_commit=off"]
@@ -47,28 +47,28 @@ services:
       - prometheus
       - tempo
 
-  ledger:
-    build:
-        context: .
-        dockerfile: Dockerfile.local
-    container_name: isura-ledger-ms
-    volumes:
-      - .:/app  # Monta o código fonte para dentro do container
-    restart: always
-    ports:
-      - "50051:50051"
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - USER=ledger
-      - ENV=local
-      - POSTGRES_HOST=isura-ledger-postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
-      - POSTGRES_DATABASE=isura-ledger
+#  ledger:
+#    build:
+#        context: .
+#        dockerfile: Dockerfile.local
+#    container_name: isura-ledger-ms
+#    volumes:
+#      - .:/app  # Monta o código fonte para dentro do container
+#    restart: always
+#    ports:
+#      - "50051:50051"
+#      - "8080:8080"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    environment:
+#      - USER=ledger
+#      - ENV=local
+#      - POSTGRES_HOST=isura-ledger-postgres
+#      - POSTGRES_PORT=5432
+#      - POSTGRES_USER=admin
+#      - POSTGRES_PASSWORD=admin
+#      - POSTGRES_DATABASE=isura-ledger
 
 volumes:
   ledger-data:

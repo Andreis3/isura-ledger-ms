@@ -1,5 +1,9 @@
+# ── Variáveis ──────────────────────────────────────────────
+
 DOCKER_COMPOSE = docker compose
 SERVICE_NAME = ledger
+DB_URL  = postgres://admin:admin@localhost:5432/isura_ledger_main?sslmode=disable
+SCHEMA_DIR = db
 
 run-app:
 	@echo "Running app"
@@ -47,6 +51,20 @@ bash:
 # 6. Build + Up combinado
 restart: down build up logs
 
+# Geração de stubs Protobuf/gRPC usando Buf v2
+proto-lint:
+	@echo "Checking proto syntax with buf..."
+	@buf lint
+
+proto-gen:
+	@echo "Generating Go code from protos..."
+	@buf generate
+
+migrate:
+	atlas schema apply \
+	  -u "$(DB_URL)" \
+	  --to "file://$(SCHEMA_DIR)"
+
 
 .PHONY: build,
 		up,
@@ -58,4 +76,7 @@ restart: down build up logs
 		unit-verbose,
 		unit-cover,
 		unit-report,
-		integration
+		integration,
+		proto-lint,
+		proto-gen,
+		migrate

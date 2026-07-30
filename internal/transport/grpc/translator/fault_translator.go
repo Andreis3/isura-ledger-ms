@@ -2,11 +2,12 @@ package translator
 
 import (
 	"errors"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"fmt"
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // ProtocolError mapeia um Code de domínio para status de protocolos externos.
@@ -50,15 +51,49 @@ type Response struct {
 	Fields  map[string]any `json:"fields,omitempty"`
 }
 
-// ToGRPCError converte um DomainError para um erro GRPC.
+// ToGRPCError converte um DomainError para um erro gRPC com detalhes customizados.
 func ToGRPCError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	code := GRPCStatus(err)
-	response := ToResponse(err)
-	return status.Error(code, response.Message)
+	// Converte para DomainError
+	if _, ok := errors.AsType[*fault.DomainError](err); !ok {
+		// Se não for DomainError, retorna erro interno genérico
+		return status.Error(codes.Internal, "internal server error")
+	}
+
+	// Mapeia o código do domínio para código gRPC
+	grpcCode := GRPCStatus(err) // sua função já existe
+
+	// Cria a resposta amigável
+	resp := ToResponse(err) // retorna Response com Code, Message, Fields
+
+	var br *errdetails.BadRequest
+	// Cria o status base com a mensagem amigável
+	st := status.New(grpcCode, resp.Message)
+	// Preenche os FieldError se houver campos
+	if len(resp.Fields) > 0 {
+		fields := make([]*errdetails.BadRequest_FieldViolation, 0, len(resp.Fields))
+		for field, val := range resp.Fields {
+			// Converte o valor para string (se for erro de validação)
+			msg := fmt.Sprintf("%v", val)
+			fields = append(fields, &errdetails.BadRequest_FieldViolation{
+				Field:       field,
+				Description: msg,
+			})
+		}
+		br = &errdetails.BadRequest{FieldViolations: fields}
+		// Adiciona o ErrorResponse como detalhe
+		stWithDetails, err := st.WithDetails(br)
+		if err != nil {
+			// Se falhar, retorna o status sem detalhes (mas ainda com a mensagem)
+			return st.Err()
+		}
+		return stWithDetails.Err()
+	}
+
+	return st.Err()
 }
 
 // ToResponse converte um DomainError para a resposta segura ao client.

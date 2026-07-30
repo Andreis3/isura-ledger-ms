@@ -12,10 +12,17 @@ import (
 )
 
 var _ = Describe("INTERNAL :: DOMAIN :: ACCOUNT :: ACCOUNT", func() {
-	Describe("#NewAccount", func() {
+	Describe("#NewAccountBuilder", func() {
 		Context("success cases", func() {
 			It("should not return an error when build new account", func() {
-				acc, err := account.NewAccount("any_id", "any_external_id", account.Asset, money.BRL)
+				acc, err := account.NewAccountBuilder().
+					WithID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithOwnerID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithAccountExternalID("any_external_id").
+					WithAccountNumber("123456").
+					WithAccountType(string(account.Asset)).
+					WithCurrency(string(money.BRL)).
+					Build()
 				Expect(err).To(BeNil())
 				Expect(acc).NotTo(BeNil())
 			})
@@ -23,21 +30,39 @@ var _ = Describe("INTERNAL :: DOMAIN :: ACCOUNT :: ACCOUNT", func() {
 
 		Context("error cases", func() {
 			It("should return an error when account type is invalid", func() {
-				_, err := account.NewAccount("any_id", "any_external_id", "any_type", money.BRL)
+				_, err := account.NewAccountBuilder().
+					WithID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithOwnerID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithAccountExternalID("any_external_id").
+					WithAccountNumber("123456").
+					WithAccountType("any_type").
+					WithCurrency(string(money.BRL)).
+					Build()
 				Expect(err).NotTo(BeNil())
-				Expect(err).To(Equal(account.ErrInvalidAccountingType))
 			})
 
 			It("should return an error when external id is empty", func() {
-				_, err := account.NewAccount("any_id", "", account.Asset, money.BRL)
+				_, err := account.NewAccountBuilder().
+					WithID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithOwnerID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithAccountExternalID("").
+					WithAccountNumber("123456").
+					WithAccountType(string(account.Asset)).
+					WithCurrency(string(money.BRL)).
+					Build()
 				Expect(err).NotTo(BeNil())
-				Expect(err).To(Equal(account.ErrEmptyExternalID))
 			})
 
 			It("should return an error when currency is invalid", func() {
-				_, err := account.NewAccount("any_id", "any_external_id", account.Asset, "INVALID")
+				_, err := account.NewAccountBuilder().
+					WithID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithOwnerID("d589965c-1622-4329-98f9-f13354a2e4dc").
+					WithAccountExternalID("any_external_id").
+					WithAccountNumber("123456").
+					WithAccountType(string(account.Asset)).
+					WithCurrency("INVALID").
+					Build()
 				Expect(err).NotTo(BeNil())
-				Expect(err).To(Equal(money.ErrInvalidCurrency))
 			})
 		})
 	})

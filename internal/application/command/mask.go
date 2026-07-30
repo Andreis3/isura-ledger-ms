@@ -9,7 +9,7 @@ func MaskInput[T any](input T) slog.Value {
 	switch v := any(input).(type) {
 	case CreateAccountInput:
 		return slog.GroupValue(
-			slog.String("external_id", v.ExternalID),
+			slog.String("account_external_id", v.AccountExternalID),
 			slog.String("accounting_type", v.AccountingType),
 			slog.String("currency", v.Currency),
 		)

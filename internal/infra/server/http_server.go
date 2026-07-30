@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -47,18 +46,23 @@ func NewHTTPServer(deps BaseDeps) *HTTPServer {
 	}
 }
 
-func (s *HTTPServer) Start() {
+func (s *HTTPServer) Start() error {
 	if err := s.server.ListenAndServe(); err != nil &&
 		!errors.Is(err, http.ErrServerClosed) {
 		s.deps.Log.CriticalText("http server failed",
 			slog.String("error", err.Error()))
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
-func (s *HTTPServer) Stop(ctx context.Context) {
+func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	if err := s.server.Shutdown(ctx); err != nil {
 		s.deps.Log.ErrorText("http server shutdown error",
 			slog.String("error", err.Error()))
+		return err
 	}
+
+	s.deps.Log.InfoText("http server stopped")
+	return nil
 }

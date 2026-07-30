@@ -6,13 +6,8 @@ import (
 
 func main() {
 	deps := server.BuildBaseDeps()
-
 	grpcSrv := server.NewGRPCServer(deps)
-
 	httpSrv := server.NewHTTPServer(*deps)
 
-	go httpSrv.Start()
-	go grpcSrv.Start()
-
-	server.GracefulShutdown(grpcSrv, httpSrv, *deps)
+	server.StartServersWithGracefulShutdown(grpcSrv, httpSrv, *deps)
 }

@@ -32,6 +32,24 @@ type DomainError struct {
 	Cause           error          // erro original preservado (permite wrapping)
 }
 
+type ValidationError struct {
+	Errors map[string]any
+}
+
+func NewValidationError(fields map[string]any) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		Cause:           errors.New("validation failed"),
+		Fields:          fields,
+		Origin:          callerName(2),
+		FriendlyMessage: "validation failed",
+	}
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("validation failed with %d error(s)", len(e.Errors))
+}
+
 // Error implementa a interface error.
 // Retorna informação técnica completa — use apenas em logs internos.
 func (e *DomainError) Error() string {
@@ -96,6 +114,7 @@ func NewWithFields(code Code, friendly string, fields map[string]any) *DomainErr
 		FriendlyMessage: friendly,
 		Fields:          fields,
 		Origin:          callerName(2),
+		Cause:           nil,
 	}
 }
 
@@ -138,11 +157,23 @@ func callerName(skip int) string {
 // Se err não for DomainError, retorna só o erro como string.
 func Attrs(err error) []any {
 	if de, ok := errors.AsType[*DomainError](err); ok {
-		return []any{
-			slog.String("error_code", string(de.Code)),
-			slog.String("error_origin", de.Origin),
-			slog.String("error_cause", de.Cause.Error()),
+		var attrs []any
+		if de.Code != "" {
+			attrs = append(attrs, slog.String("error_code", string(de.Code)))
 		}
+		if de.Cause != nil {
+			attrs = append(attrs, slog.String("error_cause", de.Cause.Error()))
+		}
+		if de.Fields != nil {
+			attrs = append(attrs, slog.Any("error_fields", de.Fields))
+		}
+		if de.Origin != "" {
+			attrs = append(attrs, slog.String("error_origin", de.Origin))
+		}
+		if de.FriendlyMessage != "" {
+			attrs = append(attrs, slog.String("error_friendly_message", de.FriendlyMessage))
+		}
+		return attrs
 	}
 	return []any{
 		slog.String("error", err.Error()),
