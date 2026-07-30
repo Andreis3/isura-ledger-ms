@@ -22,7 +22,8 @@ type Prometheus struct {
 	ledgerDbQueryDurationMilliseconds     api.Float64Histogram
 	ledgerGrpcRequestDurationMilliseconds api.Float64Histogram
 	ledgerTransactionsTotal               api.Int64Counter // {status: completed|failed}
-	ledgerAccountsTotal                   api.Int64Counter // counter simples
+	ledgerCommandDurationMilliseconds     api.Float64Histogram
+	ledgerCommandTotal                    api.Int64Counter
 }
 
 func NewPrometheus() (*Prometheus, error) {
@@ -69,14 +70,26 @@ func NewPrometheus() (*Prometheus, error) {
 		return nil, err
 	}
 
+	ledgerCommandDurationMilliseconds, err := meter.Float64Histogram("ledger_command_duration_milliseconds",
+		api.WithDescription("Histogram of command duration"),
+		api.WithExplicitBucketBoundaries(
+			5, 10, 15, 20, 30, 50,
+			100, 200, 300, 500, 1000,
+			2000, 5000, 10000, 20000,
+			30000, 50000, 100000))
+	if err != nil {
+		return nil, err
+	}
+
 	ledgerTransactionsTotal, err := meter.Int64Counter("ledger_transactions_total",
 		api.WithDescription("Total number of transactions by status"))
 	if err != nil {
 		return nil, err
 	}
 
-	ledgerAccountsTotal, err := meter.Int64Counter("ledger_accounts_total",
-		api.WithDescription("Total number of accounts"))
+	ledgerCommandTotal, err := meter.Int64Counter("ledger_command_total",
+		api.WithDescription("Total number of commands by status"),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +100,8 @@ func NewPrometheus() (*Prometheus, error) {
 		ledgerDbQueryDurationMilliseconds:     ledgerDbQueryDurationMilliseconds,
 		ledgerGrpcRequestDurationMilliseconds: ledgerGrpcRequestDurationMilliseconds,
 		ledgerTransactionsTotal:               ledgerTransactionsTotal,
-		ledgerAccountsTotal:                   ledgerAccountsTotal,
+		ledgerCommandDurationMilliseconds:     ledgerCommandDurationMilliseconds,
+		ledgerCommandTotal:                    ledgerCommandTotal,
 	}, nil
 }
 
@@ -125,8 +139,18 @@ func (p *Prometheus) RecordTransactionTotal(status string) {
 	p.ledgerTransactionsTotal.Add(context.Background(), 1, opt)
 }
 
-func (p *Prometheus) RecordAccountTotal() {
-	p.ledgerAccountsTotal.Add(context.Background(), 1)
+func (p *Prometheus) RecordCommandTotal(command string, state string) {
+	opt := api.WithAttributes(
+		attribute.Key("command").String(command),
+		attribute.Key("state").String(state))
+	p.ledgerCommandTotal.Add(context.Background(), 1, opt)
+}
+
+func (p *Prometheus) RecordCommandDuration(command string, duration float64) {
+	opt := api.WithAttributes(
+		attribute.Key("command").String(command),
+		attribute.Key("duration").Float64(duration))
+	p.ledgerCommandDurationMilliseconds.Record(context.Background(), duration, opt)
 }
 
 func (p *Prometheus) Close() {

@@ -5,5 +5,6 @@ type Metrics interface {
 	RecordDBQueryDuration(database, table, method string, duration float64)
 	RecordRequestDuration(router, protocol string, statusCode int, duration float64)
 	RecordTransactionTotal(status string)
-	RecordAccountTotal()
+	RecordCommandTotal(command string, state string)
+	RecordCommandDuration(command string, duration float64)
 }

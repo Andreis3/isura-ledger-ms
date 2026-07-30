@@ -5,6 +5,8 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/application/command"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 	pb "github.com/andreis3/isura-ledger-ms/internal/transport/grpc/pb/ledger/v1"
 	"github.com/andreis3/isura-ledger-ms/internal/transport/grpc/translator"
 )
@@ -36,8 +38,8 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 		AccountExternalID: req.GetAccountNumber(),
 		AccountNumber:     req.GetAccountNumber(),
 		TaxID:             req.GetTaxId(),
-		AccountingType:    h.AccountTypeTranslate(req),
-		Currency:          h.CurrencyTranslate(req),
+		AccountingType:    string(h.AccountTypeTranslate(req)),
+		Currency:          string(h.CurrencyTranslate(req)),
 	}
 
 	accountID, err := h.useCase.Execute(ctx, input)
@@ -50,33 +52,32 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 	}, nil
 }
 
-func (h *CreateAccountHandler) AccountTypeTranslate(req *pb.CreateAccountRequest) string {
+func (h *CreateAccountHandler) AccountTypeTranslate(req *pb.CreateAccountRequest) account.AccountType {
 	switch req.GetAccountingType() {
 	case pb.AccountingType_ACCOUNTING_TYPE_ASSET:
-		return "ASSET"
+		return account.Asset
 	case pb.AccountingType_ACCOUNTING_TYPE_LIABILITY:
-		return "LIABILITY"
+		return account.Liability
 	case pb.AccountingType_ACCOUNTING_TYPE_EQUITY:
-		return "EQUITY"
+		return account.Revenue
 	case pb.AccountingType_ACCOUNTING_TYPE_REVENUE:
-		return "REVENUE"
-
+		return account.Expense
 	case pb.AccountingType_ACCOUNTING_TYPE_EXPENSE:
-		return "EXPENSE"
+		return account.Expense
 	default:
 		return ""
 
 	}
 }
 
-func (h *CreateAccountHandler) CurrencyTranslate(req *pb.CreateAccountRequest) string {
+func (h *CreateAccountHandler) CurrencyTranslate(req *pb.CreateAccountRequest) money.Currency {
 	switch req.GetCurrency() {
 	case pb.Currency_CURRENCY_BRL:
-		return "BRL"
+		return money.BRL
 	case pb.Currency_CURRENCY_USD:
-		return "USD"
+		return money.USD
 	case pb.Currency_CURRENCY_EUR:
-		return "EUR"
+		return money.EUR
 	default:
 		return ""
 

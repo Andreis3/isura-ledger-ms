@@ -4,7 +4,7 @@ services:
     container_name: isura-ledger-postgres
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d isura-ledger"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d isura_ledger_main"]
       interval: 5s
       timeout: 2s
       retries: 5

@@ -1,5 +1,9 @@
+# ── Variáveis ──────────────────────────────────────────────
+
 DOCKER_COMPOSE = docker compose
 SERVICE_NAME = ledger
+DB_URL  = postgres://admin:admin@localhost:5432/isura_ledger_main?sslmode=disable
+SCHEMA_DIR = db
 
 run-app:
 	@echo "Running app"
@@ -56,6 +60,11 @@ proto-gen:
 	@echo "Generating Go code from protos..."
 	@buf generate
 
+migrate:
+	atlas schema apply \
+	  -u "$(DB_URL)" \
+	  --to "file://$(SCHEMA_DIR)"
+
 
 .PHONY: build,
 		up,
@@ -69,4 +78,5 @@ proto-gen:
 		unit-report,
 		integration,
 		proto-lint,
-		proto-gen
+		proto-gen,
+		migrate

@@ -28,24 +28,29 @@ type CreateAccount struct {
 	accountRepository account.Repository
 	log               application.Logger
 	tracer            application.Tracer
+	metrics           application.Metrics
 }
 
 func NewCreateAccount(
 	accountRepository account.Repository,
 	log application.Logger,
 	tracer application.Tracer,
+	metrics application.Metrics,
 ) *CreateAccount {
 	return &CreateAccount{
 		accountRepository: accountRepository,
 		log:               log,
 		tracer:            tracer,
+		metrics:           metrics,
 	}
 }
 
 func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (string, error) {
+	start := time.Now()
 	ctx, span := c.tracer.Start(ctx, "CreateAccount.Execute")
 	tracerID := span.SpanContext().TraceID()
 	defer span.End()
+	defer c.metrics.RecordCommandDuration("CreateAccount", float64(time.Since(start).Milliseconds()))
 
 	c.log.InfoJSON("CreateAccount received request",
 		slog.String("trace_id", tracerID),
@@ -60,6 +65,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				slog.String("trace_id", tracerID)},
 				fault.Attrs(err)...)...,
 		)
+		c.metrics.RecordCommandTotal("CreateAccount", "failure")
 		return "", err
 	}
 
@@ -71,6 +77,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				slog.String("account_external_id", accountEntity.AccountExternalID)},
 				fault.Attrs(err)...)...,
 		)
+		c.metrics.RecordCommandTotal("CreateAccount", "failure")
 		return "", err
 	}
 
@@ -94,6 +101,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				slog.String("account_external_id", accountEntity.AccountExternalID)},
 				fault.Attrs(err)...)...,
 		)
+		c.metrics.RecordCommandTotal("CreateAccount", "failure")
 		return "", err
 	}
 
@@ -105,6 +113,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				slog.String("account_external_id", accountEntity.AccountExternalID)},
 				fault.Attrs(err)...)...,
 		)
+		c.metrics.RecordCommandTotal("CreateAccount", "failure")
 		return "", err
 	}
 

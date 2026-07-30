@@ -74,7 +74,7 @@ func (s *GRPCServer) buildLedgerServer() *grpcTransport.LedgerServer {
 	accountRepo := composer.BuildAccountRepo()
 
 	// use cases
-	createAccount := command.NewCreateAccount(accountRepo, s.deps.Log, s.deps.Tracer)
+	createAccount := command.NewCreateAccount(accountRepo, s.deps.Log, s.deps.Tracer, s.deps.Prom)
 
 	// handlers
 	createAccountHandler := handler.NewCreateAccountHandler(createAccount, s.deps.Log, s.deps.Tracer)
