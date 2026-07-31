@@ -41,7 +41,7 @@ type AccountBuilder struct {
 	accountExternalID string
 	accountNumber     string
 	accountType       AccountType
-	TaxID             string
+	taxID             string
 	currency          money.Currency
 	createdAt         time.Time
 	updatedAt         time.Time
@@ -76,7 +76,7 @@ func (b *AccountBuilder) WithID(id string) *AccountBuilder {
 // WithOwnerID define o OwnerID (obrigatório)
 func (b *AccountBuilder) WithOwnerID(ownerID string) *AccountBuilder {
 	b.eval.CheckField(validator.NotBlank(ownerID), "owner_id", "cannot be blank")
-	//b.eval.CheckField(validator.MatchesUUID(ownerID), "owner_id", "is not uuid")
+	b.eval.CheckField(validator.MatchesUUID(ownerID), "owner_id", "is not uuid")
 	b.ownerID = ownerID
 	return b
 }
@@ -84,7 +84,7 @@ func (b *AccountBuilder) WithOwnerID(ownerID string) *AccountBuilder {
 // WithAccountExternalID define o ID externo (obrigatório)
 func (b *AccountBuilder) WithAccountExternalID(externalID string) *AccountBuilder {
 	b.eval.CheckField(validator.NotBlank(externalID), "account_external_id", "cannot be blank")
-	//b.eval.CheckField(validator.MatchesUUID(externalID), "account_external_id", "is not uuid")
+	b.eval.CheckField(validator.MatchesUUID(externalID), "account_external_id", "is not uuid")
 	b.accountExternalID = externalID
 	return b
 }
@@ -107,7 +107,7 @@ func (b *AccountBuilder) WithTaxID(rawTaxID string) *AccountBuilder {
 		}
 		return b
 	}
-	b.TaxID = cnpjObj.String()
+	b.taxID = cnpjObj.String()
 	return b
 }
 
@@ -154,7 +154,7 @@ func (b *AccountBuilder) WithUpdatedAt(updatedAt time.Time) *AccountBuilder {
 // Build constrói e valida a Account
 func (b *AccountBuilder) Build() (*Account, error) {
 	if len(b.eval) > 0 {
-		return nil, fault.NewValidationError(b.eval)
+		return nil, fault.InvalidEntityError(errors.New("invalid account entity"), b.eval)
 	}
 
 	now := time.Now()
@@ -165,7 +165,7 @@ func (b *AccountBuilder) Build() (*Account, error) {
 		AccountExternalID: b.accountExternalID,
 		AccountNumber:     b.accountNumber,
 		AccountType:       b.accountType,
-		TaxID:             b.TaxID,
+		TaxID:             b.taxID,
 		Currency:          b.currency,
 		CreatedAt:         coalesceTime(b.createdAt, now),
 		UpdatedAt:         coalesceTime(b.updatedAt, now),

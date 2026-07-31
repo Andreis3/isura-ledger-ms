@@ -22,61 +22,58 @@ const (
 )
 
 // Tipos contábeis do motor double-entry
-type AccountingType int32
+type AccountType int32
 
 const (
-	AccountingType_ACCOUNTING_TYPE_UNSPECIFIED AccountingType = 0
-	AccountingType_ACCOUNTING_TYPE_ASSET       AccountingType = 1 // Ativo (Reservas/Empréstimos)
-	AccountingType_ACCOUNTING_TYPE_LIABILITY   AccountingType = 2 // Passivo (Contas de clientes)
-	AccountingType_ACCOUNTING_TYPE_EQUITY      AccountingType = 3 // Patrimônio Líquido
-	AccountingType_ACCOUNTING_TYPE_REVENUE     AccountingType = 4 // Receita de Tarifas
-	AccountingType_ACCOUNTING_TYPE_EXPENSE     AccountingType = 5 // Despesas operacionais
+	AccountType_ACCOUNT_TYPE_UNSPECIFIED AccountType = 0
+	AccountType_ACCOUNT_TYPE_ASSET       AccountType = 1 // Ativo (Reservas/Empréstimos)
+	AccountType_ACCOUNT_TYPE_LIABILITY   AccountType = 2 // Passivo (Contas de clientes)
+	AccountType_ACCOUNT_TYPE_REVENUE     AccountType = 3 // Receita de Tarifas
+	AccountType_ACCOUNT_TYPE_EXPENSE     AccountType = 4 // Despesas operacionais
 )
 
-// Enum value maps for AccountingType.
+// Enum value maps for AccountType.
 var (
-	AccountingType_name = map[int32]string{
-		0: "ACCOUNTING_TYPE_UNSPECIFIED",
-		1: "ACCOUNTING_TYPE_ASSET",
-		2: "ACCOUNTING_TYPE_LIABILITY",
-		3: "ACCOUNTING_TYPE_EQUITY",
-		4: "ACCOUNTING_TYPE_REVENUE",
-		5: "ACCOUNTING_TYPE_EXPENSE",
+	AccountType_name = map[int32]string{
+		0: "ACCOUNT_TYPE_UNSPECIFIED",
+		1: "ACCOUNT_TYPE_ASSET",
+		2: "ACCOUNT_TYPE_LIABILITY",
+		3: "ACCOUNT_TYPE_REVENUE",
+		4: "ACCOUNT_TYPE_EXPENSE",
 	}
-	AccountingType_value = map[string]int32{
-		"ACCOUNTING_TYPE_UNSPECIFIED": 0,
-		"ACCOUNTING_TYPE_ASSET":       1,
-		"ACCOUNTING_TYPE_LIABILITY":   2,
-		"ACCOUNTING_TYPE_EQUITY":      3,
-		"ACCOUNTING_TYPE_REVENUE":     4,
-		"ACCOUNTING_TYPE_EXPENSE":     5,
+	AccountType_value = map[string]int32{
+		"ACCOUNT_TYPE_UNSPECIFIED": 0,
+		"ACCOUNT_TYPE_ASSET":       1,
+		"ACCOUNT_TYPE_LIABILITY":   2,
+		"ACCOUNT_TYPE_REVENUE":     3,
+		"ACCOUNT_TYPE_EXPENSE":     4,
 	}
 )
 
-func (x AccountingType) Enum() *AccountingType {
-	p := new(AccountingType)
+func (x AccountType) Enum() *AccountType {
+	p := new(AccountType)
 	*p = x
 	return p
 }
 
-func (x AccountingType) String() string {
+func (x AccountType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (AccountingType) Descriptor() protoreflect.EnumDescriptor {
+func (AccountType) Descriptor() protoreflect.EnumDescriptor {
 	return file_ledger_v1_account_proto_enumTypes[0].Descriptor()
 }
 
-func (AccountingType) Type() protoreflect.EnumType {
+func (AccountType) Type() protoreflect.EnumType {
 	return &file_ledger_v1_account_proto_enumTypes[0]
 }
 
-func (x AccountingType) Number() protoreflect.EnumNumber {
+func (x AccountType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use AccountingType.Descriptor instead.
-func (AccountingType) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use AccountType.Descriptor instead.
+func (AccountType) EnumDescriptor() ([]byte, []int) {
 	return file_ledger_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
@@ -134,14 +131,15 @@ func (Currency) EnumDescriptor() ([]byte, []int) {
 }
 
 type CreateAccountRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	OwnerId        string                 `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`                   // Ex: ID do usuário/cliente no customers-ms
-	AccountNumber  string                 `protobuf:"bytes,2,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"` // Número interno ou agência/conta
-	TaxId          string                 `protobuf:"bytes,3,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
-	AccountingType AccountingType         `protobuf:"varint,4,opt,name=accounting_type,json=accountingType,proto3,enum=ledger.v1.AccountingType" json:"accounting_type,omitempty"` // Enum forte
-	Currency       Currency               `protobuf:"varint,5,opt,name=currency,proto3,enum=ledger.v1.Currency" json:"currency,omitempty"`                                         // Enum forte
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	OwnerId           string                 `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"` // Ex: ID do usuário/cliente no customers-ms
+	AccountExternalId string                 `protobuf:"bytes,2,opt,name=account_external_id,json=accountExternalId,proto3" json:"account_external_id,omitempty"`
+	AccountNumber     string                 `protobuf:"bytes,3,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"` // Número interno ou agência/conta
+	TaxId             string                 `protobuf:"bytes,4,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
+	AccountType       AccountType            `protobuf:"varint,5,opt,name=account_type,json=accountType,proto3,enum=ledger.v1.AccountType" json:"account_type,omitempty"` // Enum forte
+	Currency          Currency               `protobuf:"varint,6,opt,name=currency,proto3,enum=ledger.v1.Currency" json:"currency,omitempty"`                             // Enum forte
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *CreateAccountRequest) Reset() {
@@ -181,6 +179,13 @@ func (x *CreateAccountRequest) GetOwnerId() string {
 	return ""
 }
 
+func (x *CreateAccountRequest) GetAccountExternalId() string {
+	if x != nil {
+		return x.AccountExternalId
+	}
+	return ""
+}
+
 func (x *CreateAccountRequest) GetAccountNumber() string {
 	if x != nil {
 		return x.AccountNumber
@@ -195,11 +200,11 @@ func (x *CreateAccountRequest) GetTaxId() string {
 	return ""
 }
 
-func (x *CreateAccountRequest) GetAccountingType() AccountingType {
+func (x *CreateAccountRequest) GetAccountType() AccountType {
 	if x != nil {
-		return x.AccountingType
+		return x.AccountType
 	}
-	return AccountingType_ACCOUNTING_TYPE_UNSPECIFIED
+	return AccountType_ACCOUNT_TYPE_UNSPECIFIED
 }
 
 func (x *CreateAccountRequest) GetCurrency() Currency {
@@ -349,131 +354,18 @@ func (x *GetBalanceResponse) GetCurrency() string {
 	return ""
 }
 
-// Representa um erro detalhado de validação por campo
-type FieldError struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Field         string                 `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FieldError) Reset() {
-	*x = FieldError{}
-	mi := &file_ledger_v1_account_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FieldError) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FieldError) ProtoMessage() {}
-
-func (x *FieldError) ProtoReflect() protoreflect.Message {
-	mi := &file_ledger_v1_account_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FieldError.ProtoReflect.Descriptor instead.
-func (*FieldError) Descriptor() ([]byte, []int) {
-	return file_ledger_v1_account_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *FieldError) GetField() string {
-	if x != nil {
-		return x.Field
-	}
-	return ""
-}
-
-func (x *FieldError) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-// Estrutura de erro padronizada para retornos customizados (caso não use o google.rpc.Status nativo)
-type ErrorResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Fields        []*FieldError          `protobuf:"bytes,3,rep,name=fields,proto3" json:"fields,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ErrorResponse) Reset() {
-	*x = ErrorResponse{}
-	mi := &file_ledger_v1_account_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ErrorResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ErrorResponse) ProtoMessage() {}
-
-func (x *ErrorResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ledger_v1_account_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ErrorResponse.ProtoReflect.Descriptor instead.
-func (*ErrorResponse) Descriptor() ([]byte, []int) {
-	return file_ledger_v1_account_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ErrorResponse) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *ErrorResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *ErrorResponse) GetFields() []*FieldError {
-	if x != nil {
-		return x.Fields
-	}
-	return nil
-}
-
 var File_ledger_v1_account_proto protoreflect.FileDescriptor
 
 const file_ledger_v1_account_proto_rawDesc = "" +
 	"\n" +
-	"\x17ledger/v1/account.proto\x12\tledger.v1\"\xe4\x01\n" +
+	"\x17ledger/v1/account.proto\x12\tledger.v1\"\x8b\x02\n" +
 	"\x14CreateAccountRequest\x12\x19\n" +
-	"\bowner_id\x18\x01 \x01(\tR\aownerId\x12%\n" +
-	"\x0eaccount_number\x18\x02 \x01(\tR\raccountNumber\x12\x15\n" +
-	"\x06tax_id\x18\x03 \x01(\tR\x05taxId\x12B\n" +
-	"\x0faccounting_type\x18\x04 \x01(\x0e2\x19.ledger.v1.AccountingTypeR\x0eaccountingType\x12/\n" +
-	"\bcurrency\x18\x05 \x01(\x0e2\x13.ledger.v1.CurrencyR\bcurrency\"6\n" +
+	"\bowner_id\x18\x01 \x01(\tR\aownerId\x12.\n" +
+	"\x13account_external_id\x18\x02 \x01(\tR\x11accountExternalId\x12%\n" +
+	"\x0eaccount_number\x18\x03 \x01(\tR\raccountNumber\x12\x15\n" +
+	"\x06tax_id\x18\x04 \x01(\tR\x05taxId\x129\n" +
+	"\faccount_type\x18\x05 \x01(\x0e2\x16.ledger.v1.AccountTypeR\vaccountType\x12/\n" +
+	"\bcurrency\x18\x06 \x01(\x0e2\x13.ledger.v1.CurrencyR\bcurrency\"6\n" +
 	"\x15CreateAccountResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\"C\n" +
@@ -481,22 +373,13 @@ const file_ledger_v1_account_proto_rawDesc = "" +
 	"\x13external_account_id\x18\x01 \x01(\tR\x11externalAccountId\"J\n" +
 	"\x12GetBalanceResponse\x12\x18\n" +
 	"\abalance\x18\x01 \x01(\x03R\abalance\x12\x1a\n" +
-	"\bcurrency\x18\x02 \x01(\tR\bcurrency\"<\n" +
-	"\n" +
-	"FieldError\x12\x14\n" +
-	"\x05field\x18\x01 \x01(\tR\x05field\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"l\n" +
-	"\rErrorResponse\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12-\n" +
-	"\x06fields\x18\x03 \x03(\v2\x15.ledger.v1.FieldErrorR\x06fields*\xc1\x01\n" +
-	"\x0eAccountingType\x12\x1f\n" +
-	"\x1bACCOUNTING_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
-	"\x15ACCOUNTING_TYPE_ASSET\x10\x01\x12\x1d\n" +
-	"\x19ACCOUNTING_TYPE_LIABILITY\x10\x02\x12\x1a\n" +
-	"\x16ACCOUNTING_TYPE_EQUITY\x10\x03\x12\x1b\n" +
-	"\x17ACCOUNTING_TYPE_REVENUE\x10\x04\x12\x1b\n" +
-	"\x17ACCOUNTING_TYPE_EXPENSE\x10\x05*Z\n" +
+	"\bcurrency\x18\x02 \x01(\tR\bcurrency*\x93\x01\n" +
+	"\vAccountType\x12\x1c\n" +
+	"\x18ACCOUNT_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12ACCOUNT_TYPE_ASSET\x10\x01\x12\x1a\n" +
+	"\x16ACCOUNT_TYPE_LIABILITY\x10\x02\x12\x18\n" +
+	"\x14ACCOUNT_TYPE_REVENUE\x10\x03\x12\x18\n" +
+	"\x14ACCOUNT_TYPE_EXPENSE\x10\x04*Z\n" +
 	"\bCurrency\x12\x18\n" +
 	"\x14CURRENCY_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fCURRENCY_BRL\x10\x01\x12\x10\n" +
@@ -516,26 +399,23 @@ func file_ledger_v1_account_proto_rawDescGZIP() []byte {
 }
 
 var file_ledger_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_ledger_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_ledger_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_ledger_v1_account_proto_goTypes = []any{
-	(AccountingType)(0),           // 0: ledger.v1.AccountingType
+	(AccountType)(0),              // 0: ledger.v1.AccountType
 	(Currency)(0),                 // 1: ledger.v1.Currency
 	(*CreateAccountRequest)(nil),  // 2: ledger.v1.CreateAccountRequest
 	(*CreateAccountResponse)(nil), // 3: ledger.v1.CreateAccountResponse
 	(*GetBalanceRequest)(nil),     // 4: ledger.v1.GetBalanceRequest
 	(*GetBalanceResponse)(nil),    // 5: ledger.v1.GetBalanceResponse
-	(*FieldError)(nil),            // 6: ledger.v1.FieldError
-	(*ErrorResponse)(nil),         // 7: ledger.v1.ErrorResponse
 }
 var file_ledger_v1_account_proto_depIdxs = []int32{
-	0, // 0: ledger.v1.CreateAccountRequest.accounting_type:type_name -> ledger.v1.AccountingType
+	0, // 0: ledger.v1.CreateAccountRequest.account_type:type_name -> ledger.v1.AccountType
 	1, // 1: ledger.v1.CreateAccountRequest.currency:type_name -> ledger.v1.Currency
-	6, // 2: ledger.v1.ErrorResponse.fields:type_name -> ledger.v1.FieldError
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_ledger_v1_account_proto_init() }
@@ -549,7 +429,7 @@ func file_ledger_v1_account_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ledger_v1_account_proto_rawDesc), len(file_ledger_v1_account_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   6,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

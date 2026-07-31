@@ -66,6 +66,7 @@ migrate:
 	  --to "file://$(SCHEMA_DIR)"
 
 
+
 .PHONY: build,
 		up,
 		down,

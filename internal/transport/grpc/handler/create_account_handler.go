@@ -36,7 +36,7 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 
 	input := dto.CreateAccountInput{
 		OwnerID:           req.GetOwnerId(),
-		AccountExternalID: req.GetAccountNumber(),
+		AccountExternalID: req.GetAccountExternalId(),
 		AccountNumber:     req.GetAccountNumber(),
 		TaxID:             req.GetTaxId(),
 		AccountingType:    string(h.AccountTypeTranslate(req)),
@@ -54,16 +54,14 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 }
 
 func (h *CreateAccountHandler) AccountTypeTranslate(req *pb.CreateAccountRequest) account.AccountType {
-	switch req.GetAccountingType() {
-	case pb.AccountingType_ACCOUNTING_TYPE_ASSET:
+	switch req.GetAccountType() {
+	case pb.AccountType_ACCOUNT_TYPE_ASSET:
 		return account.Asset
-	case pb.AccountingType_ACCOUNTING_TYPE_LIABILITY:
+	case pb.AccountType_ACCOUNT_TYPE_LIABILITY:
 		return account.Liability
-	case pb.AccountingType_ACCOUNTING_TYPE_EQUITY:
+	case pb.AccountType_ACCOUNT_TYPE_REVENUE:
 		return account.Revenue
-	case pb.AccountingType_ACCOUNTING_TYPE_REVENUE:
-		return account.Expense
-	case pb.AccountingType_ACCOUNTING_TYPE_EXPENSE:
+	case pb.AccountType_ACCOUNT_TYPE_EXPENSE:
 		return account.Expense
 	default:
 		return ""

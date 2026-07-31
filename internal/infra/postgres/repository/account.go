@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/database"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/model"
 	"github.com/jackc/pgx/v5"
@@ -49,7 +50,11 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
 		accountModel.UpdatedAt,
 	)
 
-	return err
+	if err != nil {
+		return fault.SaveAccountError(err)
+	}
+
+	return nil
 }
 
 func (r *AccountRepository) FindByID(ctx context.Context, id account.AccountID) (*account.Account, error) {
@@ -83,7 +88,7 @@ func (r *AccountRepository) FindByID(ctx context.Context, id account.AccountID) 
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, account.ErrAccountNotFound
+			return nil, fault.FindAccountNotFoundError(err)
 		}
 		return nil, err
 	}
@@ -129,7 +134,7 @@ func (r *AccountRepository) FindByAccountExternalID(ctx context.Context, Account
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, err
+		return nil, fault.FindAccountError(err)
 	}
 
 	account, err := model.ToAccountDomain(accountModel)
