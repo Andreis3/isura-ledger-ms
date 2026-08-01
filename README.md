@@ -32,139 +32,181 @@ The `domain` layer imports nothing external. The `infrastructure` layer implemen
 ### Project structure
 
 ```
+## 📂 Estrutura do Projeto
+
 isura-ledger-ms/
 ├── .github/
 │   └── workflows/
 │       └── golang-build-test.yaml    # CI/CD pipeline de testes e build
+├── .air.toml                         # Configuração do hot reload (Air) para desenvolvimento local
+├── .gitignore                        # Arquivos e pastas ignorados pelo Git
+├── Dockerfile                        # Build multi-stage otimizado para produção
+├── Dockerfile.local                  # Build e container para desenvolvimento local com Air
+├── Makefile                          # Comandos automatizados para build, migrações e testes
+├── README.md                         # Documentação principal do projeto
+├── TODO.md                           # Lista de pendências e roadmap de fases
+├── buf.gen.yaml                      # Configuração de geração de código Go do Buf v2
+├── buf.yaml                          # Configuração do módulo Protobuf do Buf v2
 ├── cmd/
 │   └── server/
-│       └── main.go                  # Ponto de entrada (inicialização do container/fx)
+│       └── main.go                  # Ponto de entrada (bootstrap da aplicação)
+├── config.example.json               # Exemplo de configuração de variáveis em JSON
+├── config.json                       # Configurações locais da aplicação
 ├── db/
 │   ├── accounts.pg.hcl              # Definição Atlas HCL da tabela de contas
 │   ├── entries.pg.hcl               # Definição Atlas HCL da tabela de lançamentos
 │   ├── outbox.pg.hcl                # Definição Atlas HCL da tabela outbox
-│   ├── schema.pg.hcl                # Esquema público do banco de dados
+│   ├── schema.pg.hcl                # Esquema público base do banco de dados
 │   └── transactions.pg.hcl          # Definição Atlas HCL da tabela de transações
+├── docker-compose.yml                # Orquestração de serviços (Postgres, Prometheus, Tempo, Grafana)
 ├── docker/
 │   └── tempo/
-│       └── tempo.yaml               # Configuração do Grafana Tempo (Traces)
+│       └── tempo.yaml               # Configuração do Grafana Tempo para rastreamento distribuído
+├── go.mod                            # Definição do módulo Go e dependências
+├── go.sum                            # Checksums criptográficos das dependências
 ├── internal/
 │   ├── application/
 │   │   ├── command/
-│   │   │   ├── create_account.go    # Use Case: Criação de conta contábil
-│   │   │   ├── create_transaction.go# Use Case: Criação de transação double-entry
-│   │   │   └── mask.go              # Helpers de mascaramento/logs sensíveis
+│   │   │   ├── create_account.go    # Use Case: Criação e validação de conta contábil
+│   │   │   ├── create_transaction.go# Use Case: Criação de transações double-entry
+│   │   │   └── mask.go              # Helpers de mascaramento para logs seguros
+│   │   ├── dto/
+│   │   │   └── create_account.go    # Objetos de transferência de dados (Input/Output)
 │   │   ├── event/
-│   │   │   └── transaction_create.go# Contrato/Payload do evento de domínio gerado
+│   │   │   └── transaction_create.go# Contrato/Payload do evento gerado na Outbox
 │   │   ├── logger.go                # Interface/Contrato de logs da aplicação
 │   │   ├── metrics.go               # Interface/Contrato de métricas da aplicação
 │   │   ├── tracer.go                # Interface/Contrato de traces (OpenTelemetry)
-│   │   └── uow.go                   # Interface do Unit of Work
+│   │   └── uow.go                   # Interface do padrão Unit of Work
 │   ├── domain/
 │   │   ├── account/
-│   │   │   ├── account.go           # Entidade Account e validações de saldo
+│   │   │   ├── account.go           # Entidade Account, Builder e regras de saldo
 │   │   │   └── repository.go        # Interface do repositório de contas
 │   │   ├── fault/
+│   │   │   ├── errors.go            # Fábricas e mapeamentos de erros de infra/banco
 │   │   │   ├── fault.go             # Engine customizável de erros estruturados
 │   │   │   └── sentinel.go          # Erros sentinelas globais do negócio
 │   │   ├── money/
-│   │   │   └── money.go             # Value Object Money (Cents + Currency)
+│   │   │   └── money.go             # Value Object Money (armazenado em centavos)
 │   │   ├── outbox/
-│   │   │   ├── outbox.go            # Agregado Outbox e Máquina de Estados
+│   │   │   ├── outbox.go            # Agregado Outbox e máquina de estados
 │   │   │   └── repository.go        # Interface do repositório outbox
-│   │   └── transaction/
-│   │       ├── entry.go             # Entidade Entry (Debito/Credito)
-│   │       ├── repository.go        # Interface do repositório de transações
-│   │       ├── transaction.go       # Agregado Root Transaction + State machine
-│   │       └── types.go             # IDs fortemente tipados (TransactionID, etc.)
+│   │   ├── tax/
+│   │   │   └── cnpj.go              # Value Object CNPJ com validação de dígitos
+│   │   ├── transaction/
+│   │   │   ├── entry.go             # Entidade Entry (Débito/Crédito)
+│   │   │   ├── repository.go        # Interface do repositório de transações
+│   │   │   ├── transaction.go       # Agregado Root Transaction + Máquina de Estados
+│   │   │   └── types.go             # IDs fortemente tipados (TransactionID, etc.)
+│   │   └── validator/
+│   │       └── validator.go         # Utilitários de validação e verificação de campos
 │   ├── infra/
 │   │   ├── configs/
-│   │   │   └── configs.go           # Carregamento de variáveis via Viper
+│   │   │   └── configs.go           # Carregamento de configurações via Viper
+│   │   ├── dependency/
+│   │   │   ├── base_deps.go         # Inicialização de dependências base de infra
+│   │   │   └── composer.go          # Wires e composição dos repositórios
+│   │   ├── factory/
+│   │   │   └── create_account_factory.go # Fábrica de instanciação do Use Case de contas
 │   │   ├── logger/
-│   │   │   └── logger.go            # Implementação slog (JSON/Tint dual handler)
+│   │   │   └── logger.go            # Implementação do slog (JSON/Tint dual handler)
 │   │   ├── observability/
 │   │   │   ├── otel_tracer.go       # Implementação do Tracer OpenTelemetry
-│   │   │   └── prometheus.go        # Registro do subsistema de métricas
+│   │   │   └── prometheus.go        # Registro do subsistema de métricas Prometheus
 │   │   ├── postgres/
-│   │   │   ├── database/
-│   │   │   │   ├── helper.go        # Tratamentos específicos do driver pgx
-│   │   │   │   └── querier.go       # Interface unificada para DB Pool e Tx
-│   │   │   ├── model/
-│   │   │   │   ├── account.go       # Model do banco para Account
-│   │   │   │   ├── entry.go         # Model do banco para Entry
-│   │   │   │   ├── outbox.go        # Model do banco para Outbox
-│   │   │   │   └── transaction.go   # Model do banco para Transaction
-│   │   │   ├── repository/
-│   │   │   │   ├── observability/
-│   │   │   │   │   ├── account_observability.go     # Decorator para tracing de contas
-│   │   │   │   │   ├── outbox_observability.go      # Decorator para tracing de outbox
-│   │   │   │   │   └── transaction_observability.go # Decorator para tracing de transações
-│   │   │   │   ├── account.go       # Repositório Postgres para contas
-│   │   │   │   ├── outbox.go        # Repositório Postgres para outbox
-│   │   │   │   ├── resolve_db.go    # Helper para extrair Tx ativa do Context
-│   │   │   │   └── transaction.go   # Repositório Postgres para transações
-│   │   │   ├── uow/
-│   │   │   │   └── uow.go           # Implementação concreta do UoW com pgx.Tx
-│   │   │   └── postgres.go          # Inicialização e ping do pool do Postgres
+│   │   │   database/
+│   │   │   │   ├── helper.go        # Funções auxiliares de conversão de tipos pgx
+│   │   │   │   └── querier.go       # Interface unificada para DB Pool e Transações (Tx)
+│   │   │   model/
+│   │   │       ├── account.go       # Model Postgres para Account
+│   │   │       ├── entry.go         # Model Postgres para Entry
+│   │   │       ├── outbox.go        # Model Postgres para Outbox
+│   │   │       └── transaction.go   # Model Postgres para Transaction
+│   │   │   repository/
+│   │   │   │   observability/
+│   │   │   │   │   ├── account_observability.go     # Decorator para métricas/traces de contas
+│   │   │   │   │   ├── outbox_observability.go      # Decorator para métricas/traces de outbox
+│   │   │   │   │   └── transaction_observability.go # Decorator para métricas/traces de transações
+│   │   │   │   ├── account.go       # Repositório Postgres concreto para contas
+│   │   │   │   ├── outbox.go        # Repositório Postgres concreto para outbox
+│   │   │   │   ├── resolve_db.go    # Helper para extrair Transação ativa do Contexto
+│   │   │   │   └── transaction.go   # Repositório Postgres concreto para transações
+│   │   │   uow/
+│   │   │   │   └── uow.go           # Implementação concreta do Unit of Work com pgx.Tx
+│   │   │   └── postgres.go          # Inicialização, pool e ping da conexão PostgreSQL
 │   │   └── server/
-│   │       ├── base_deps.go         # Provider Fx para infra básica (logger, config)
-│   │       ├── composer.go          # Wires/Módulos Fx que orquestram a injeção
-│   │       ├── graceful_shutdown.go # Controle de encerramento limpo do gRPC/HTTP
-│   │       ├── grpc_server.go       # Ciclo de vida do servidor gRPC
-│   │       └── http_server.go       # Ciclo de vida do servidor HTTP (Métricas/Health)
+│   │       ├── graceful_shutdown.go # Controle de encerramento limpo dos servidores
+│   │       ├── grpc_server.go       # Ciclo de vida, interceptors e registro do gRPC
+│   │       └── http_server.go       # Ciclo de vida e configuração do servidor HTTP (Chi)
 │   ├── transport/
 │   │   ├── grpc/
 │   │   │   ├── handler/
-│   │   │   │   └── create_account_handler.go # Traduz Protobuf ↔ Command de Conta
+│   │   │   │   ├── create_account_handler.go     # Traduz requisições Protobuf ↔ Command de Conta
+│   │   │   │   └── create_transaction_handler.go # Traduz requisições Protobuf ↔ Command de Transação
 │   │   │   ├── interceptor/
-│   │   │   │   ├── logging.go       # Interceptor gRPC de logs
-│   │   │   │   ├── metrics.go       # Interceptor gRPC de Prometheus
-│   │   │   │   └── tracing.go       # Interceptor gRPC de Spans/Traces
-│   │   │   ├── pb/ledger/v1/        # Arquivos `.go` auto-gerados pelo protoc/buf
+│   │   │   │   ├── logging.go       # Interceptor gRPC de logs estruturados
+│   │   │   │   ├── metrics.go       # Interceptor gRPC de coleta de métricas
+│   │   │   │   └── tracing.go       # Interceptor gRPC de rastreamento distribuído
+│   │   │   ├── pb/ledger/v1/        # Stubs `.go` gerados automaticamente pelo Protobuf/Buf
 │   │   │   │   ├── account.pb.go
 │   │   │   │   ├── ledger.pb.go
 │   │   │   │   ├── ledger_grpc.pb.go
 │   │   │   │   └── transaction.pb.go
 │   │   │   ├── translator/
-│   │   │   │   └── fault_translator.go # Mapeia erros de domínio para gRPC Codes
-│   │   │   ├── ledger_module.go     # Módulo gRPC do Ledger
-│   │   │   ├── module.go            # Registro de Interceptors no Fx
-│   │   │   └── server_registry.go   # Liga o Handler gRPC gerado ao Servidor
+│   │   │   │   └── fault_translator.go # Traduz erros de domínio para gRPC Status Codes
+│   │   │   ├── ledger_module.go     # Módulo gRPC específico do Ledger
+│   │   │   ├── module.go            # Interface base para módulos gRPC
+│   │   │   ├── server.go            # Definição estrutural do LedgerServer gRPC
+│   │   │   └── server_registry.go   # Registrador dinâmico de módulos gRPC
 │   │   └── rest/
+│   │       ├── decoder/
+│   │       │   ├── request.go       # Decodificador de corpo HTTP com validação de erros JSON
+│   │       │   ├── response_error.go   # Serializador padronizado de erros REST
+│   │       │   └── response_sucess.go  # Serializador padronizado de sucesso REST
 │   │       ├── handler/
-│   │       │   └── healthcheck_handler.go
+│   │       │   ├── create_account_handler.go # Handler HTTP para criação de contas
+│   │       │   └── healthcheck_handler.go    # Handler de Health Check com métricas do runtime Go
+│   │       ├── middleware/
+│   │       │   ├── logging.go       # Middleware HTTP de logs de requisição
+│   │       │   ├── metric.go        # Middleware HTTP de métricas Prometheus
+│   │       │   └── tracing.go       # Middleware HTTP para OpenTelemetry Spans
 │   │       ├── module/
-│   │       │   ├── healthcheck_module.go
-│   │       │   └── metrics_module.go
-│   │       ├── types/
-│   │       │   └── route.go         # Tipagem para acoplamento de rotas HTTP
-│   │       ├── register.go          # Registrador do roteador Chi
-│   │       └── setup.go             # Criação e configuração do Chi Router
-│   └── tests/
-│       └── unit/domain/             # Suítes de testes unitários do domínio
-│           ├── account/
-│           ├── money/
-│           ├── outbox/
-│           └── transaction/
-│               ├── suite_test.go
-│               ├── transaction_test.go
-│               └── types_test.go
-├── proto/ledger/v1/
-│   ├── account.proto                # Estrutura de mensagens de conta
-│   ├── ledger.proto                 # Definição dos RPCs do serviço
-│   └── transaction.proto            # Estrutura de mensagens de transação
-├── .air.toml                        # Hot reload para desenvolvimento local
-├── .gitignore
-├── buf.gen.yaml                     # Configuração do gerador do Buf v2
-├── buf.yaml                         # Configuração do módulo Protobuf do Buf v2
-├── docker-compose.yml               # Postgres, Prometheus, Tempo, Grafana
-├── Dockerfile                       # Build multi-stage para produção
-├── Dockerfile.local                 # Build otimizado para o Air local
-├── go.mod
-├── go.sum
-├── Makefile                         # Comandos para rodar migrations, buf, e testes
-├── prometheus.yml                   # Configuração de scraping das métricas
-└── README.md
+│   │       │   ├── account_module.go     # Agrupador de rotas REST de contas
+│   │       │   ├── healthcheck_module.go # Agrupador de rotas REST de healthcheck
+│   │       │   └── metrics_module.go     # Exposição do endpoint `/metrics` do Prometheus
+│   │       ├── register.go          # Registrador central de rotas no roteador Chi
+│   │       ├── setup.go             # Inicialização e injeção do roteador Chi REST
+│   │       ├── translator/
+│   │       │   └── fault_translator.go # Mapeia códigos de domínio para HTTP Status Codes
+│   │       └── types/
+│   │           └── route.go         # Tipagens e estruturas auxiliares para roteamento HTTP
+│   └── util/
+│       └── constants.go             # Constantes utilitárias globais (tipos de handler)
+├── payload.json                      # Payload de exemplo para testes de requisição
+├── prometheus.yml                    # Configuração de scraping do Prometheus
+├── proto/
+│   └── ledger/
+│       └── v1/
+│           ├── account.proto        # Contrato Protobuf de contas e enums de tipo/moeda
+│           ├── ledger.proto         # Contrato Protobuf dos serviços globais do Ledger
+│           └── transaction.proto    # Contrato Protobuf de transações e lançamentos
+├── targets.txt                       # Arquivo de alvos para testes de carga com Vegeta
+└── tests/
+    └── unit/
+        └── domain/
+            ├── account/
+            │   ├── account_test.go   # Testes unitários da entidade Account
+            │   └── suite_test.go     # Suíte Ginkgo para Account
+            ├── money/
+            │   ├── money_test.go     # Testes unitários do Value Object Money
+            │   └── suite_test.go     # Suíte Ginkgo para Money
+            ├── outbox/
+            │   ├── outbox_test.go    # Testes unitários do agregado Outbox
+            │   └── suite_test.go     # Suíte Ginkgo para Outbox
+            └── transaction/
+                ├── suite_test.go     # Suíte Ginkgo para Transaction
+                ├── transaction_test.go # Testes unitários do agregado Transaction
+                └── types_test.go     # Testes da máquina de estados de transações
 ```
 
 ---
