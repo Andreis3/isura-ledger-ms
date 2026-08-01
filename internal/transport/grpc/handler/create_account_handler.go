@@ -43,13 +43,13 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 		Currency:          string(h.CurrencyTranslate(req)),
 	}
 
-	accountID, err := h.useCase.Execute(ctx, input)
+	response, err := h.useCase.Execute(ctx, input)
 	if err != nil {
 		return nil, translator.ToGRPCError(err)
 	}
 
 	return &pb.CreateAccountResponse{
-		AccountId: accountID,
+		AccountId: *response.AccountID,
 	}, nil
 }
 

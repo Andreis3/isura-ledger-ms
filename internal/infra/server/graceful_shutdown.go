@@ -8,10 +8,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andreis3/isura-ledger-ms/internal/infra/dependency"
 	"golang.org/x/sync/errgroup"
 )
 
-func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, deps BaseDeps) {
+func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, deps dependency.BaseDeps) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 

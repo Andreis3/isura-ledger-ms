@@ -63,3 +63,28 @@ func RollbackTransactionError(err error) *DomainError {
 		Cause:           err,
 	}
 }
+
+/***********JSON Decoder Error *****************/
+func ErrorJSONSyntaxError(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		FriendlyMessage: "json unmarshal type error",
+		Cause:           err,
+	}
+}
+
+func ErrorJSONUnmarshalTypeError(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		FriendlyMessage: "json unmarshal type error",
+		Cause:           err,
+	}
+}
+
+func ErrorJSON(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		FriendlyMessage: "json unmarshal type error",
+		Cause:           err,
+	}
+}

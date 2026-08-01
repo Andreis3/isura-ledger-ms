@@ -6,6 +6,7 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres"
 	"github.com/andreis3/isura-ledger-ms/internal/transport/rest/handler"
 	"github.com/andreis3/isura-ledger-ms/internal/transport/rest/types"
+	"github.com/andreis3/isura-ledger-ms/internal/util"
 )
 
 type HealthCheck struct {
@@ -26,6 +27,7 @@ func (r *HealthCheck) Routes() types.RouteType {
 			Method:      http.MethodGet,
 			Path:        "/health",
 			Handler:     handler.HealthCheck(r.pg, r.serviceName),
+			Type:        util.Handler,
 			Middlewares: types.Middlewares{},
 		},
 	}

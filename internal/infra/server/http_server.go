@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/andreis3/isura-ledger-ms/internal/infra/dependency"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/andreis3/isura-ledger-ms/internal/transport/rest"
@@ -15,19 +16,17 @@ import (
 
 type HTTPServer struct {
 	server *http.Server
-	deps   BaseDeps
+	deps   dependency.BaseDeps
 }
 
-func NewHTTPServer(deps BaseDeps) *HTTPServer {
+func NewHTTPServer(deps dependency.BaseDeps) *HTTPServer {
 	start := time.Now()
 
 	mux := chi.NewRouter()
 
 	rest.Setup(&rest.SetupDeps{
-		Mux:      mux,
-		Postgres: deps.Pg,
-		Log:      deps.Log,
-		Conf:     deps.Cfg,
+		Mux:  mux,
+		Deps: &deps,
 	})
 
 	server := &http.Server{

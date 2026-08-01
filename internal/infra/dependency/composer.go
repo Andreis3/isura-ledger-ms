@@ -1,4 +1,4 @@
-package server
+package dependency
 
 import (
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"

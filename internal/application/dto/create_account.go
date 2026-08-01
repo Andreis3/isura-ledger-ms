@@ -8,3 +8,7 @@ type CreateAccountInput struct {
 	AccountingType    string `json:"accounting_type"`
 	Currency          string `json:"currency"`
 }
+
+type CreateAccountOutput struct {
+	AccountID *string `json:"account_id"`
+}

@@ -3,6 +3,7 @@ package module
 import (
 	"net/http"
 
+	"github.com/andreis3/isura-ledger-ms/internal/util"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/andreis3/isura-ledger-ms/internal/transport/rest/types"
@@ -20,6 +21,7 @@ func (m *Metrics) Routes() types.RouteType {
 			Method:      http.MethodGet,
 			Path:        "/metrics",
 			Handler:     promhttp.Handler(),
+			Type:        util.Handler,
 			Middlewares: types.Middlewares{},
 		},
 	}
