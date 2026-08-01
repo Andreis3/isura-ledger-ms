@@ -18,7 +18,7 @@ var _ = Describe("INTERNAL :: DOMAIN :: ACCOUNT :: ACCOUNT", func() {
 				acc, err := account.NewAccountBuilder().
 					WithID("d589965c-1622-4329-98f9-f13354a2e4dc").
 					WithOwnerID("d589965c-1622-4329-98f9-f13354a2e4dc").
-					WithAccountExternalID("any_external_id").
+					WithAccountExternalID("d589965c-1622-4329-98f9-f13354a2e4dc").
 					WithAccountNumber("123456").
 					WithAccountType(string(account.Asset)).
 					WithCurrency(string(money.BRL)).
@@ -33,7 +33,7 @@ var _ = Describe("INTERNAL :: DOMAIN :: ACCOUNT :: ACCOUNT", func() {
 				_, err := account.NewAccountBuilder().
 					WithID("d589965c-1622-4329-98f9-f13354a2e4dc").
 					WithOwnerID("d589965c-1622-4329-98f9-f13354a2e4dc").
-					WithAccountExternalID("any_external_id").
+					WithAccountExternalID("d589965c-1622-4329-98f9-f13354a2e4dc").
 					WithAccountNumber("123456").
 					WithAccountType("any_type").
 					WithCurrency(string(money.BRL)).
@@ -57,7 +57,7 @@ var _ = Describe("INTERNAL :: DOMAIN :: ACCOUNT :: ACCOUNT", func() {
 				_, err := account.NewAccountBuilder().
 					WithID("d589965c-1622-4329-98f9-f13354a2e4dc").
 					WithOwnerID("d589965c-1622-4329-98f9-f13354a2e4dc").
-					WithAccountExternalID("any_external_id").
+					WithAccountExternalID("d589965c-1622-4329-98f9-f13354a2e4dc").
 					WithAccountNumber("123456").
 					WithAccountType(string(account.Asset)).
 					WithCurrency("INVALID").
