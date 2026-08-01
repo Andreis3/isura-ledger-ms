@@ -10,6 +10,7 @@ type RouteFields struct {
 	Method  string
 	Path    string
 	Handler any
+	Type    string
 	Middlewares
 }
 

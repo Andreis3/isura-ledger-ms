@@ -3,6 +3,7 @@ package rest
 import (
 	"net/http"
 
+	"github.com/andreis3/isura-ledger-ms/internal/util"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
@@ -67,12 +68,12 @@ func (r *RegisterRoutes) attachRoute(route types.RouteFields) {
 
 // registerHandler checks whether route.Handler is a Handler
 func (r *RegisterRoutes) registerHandler(m chi.Router, route types.RouteFields) {
-	handler, ok := route.Handler.(http.Handler)
-	if !ok {
-		r.log.CriticalText("Route registration error: invalid handler type for Handler")
-		return
-	}
-
 	// Method(...) to explicitly register the HTTP method
-	m.Method(route.Method, route.Path, handler)
+	switch route.Type {
+	case util.Handler:
+		m.Method(route.Method, route.Path, route.Handler.(http.Handler))
+
+	case util.HandlerFunc:
+		m.MethodFunc(route.Method, route.Path, route.Handler.(func(http.ResponseWriter, *http.Request)))
+	}
 }

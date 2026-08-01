@@ -3,8 +3,9 @@ package uow
 import (
 	"context"
 	"errors"
-	"fmt"
+	"time"
 
+	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/database"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -26,18 +27,22 @@ func NewUnitOfWork(pool *pgxpool.Pool) *UnitOfWork {
 func (u *UnitOfWork) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	tx, err := u.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrBeginTransaction, err)
+		return fault.BeginTransactionError(errors.Join(err, ErrBeginTransaction))
 	}
 
 	if err := fn(database.WithTx(ctx, tx)); err != nil {
-		if rbErr := tx.Rollback(ctx); rbErr != nil {
-			return fmt.Errorf("%w: %v | rollback error: %v", ErrRollbackTransaction, err, rbErr)
+		// Cria um contexto seguro para o rollback caso o ctx original tenha expirado/cancelado
+		rbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if rbErr := tx.Rollback(rbCtx); rbErr != nil {
+			return fault.RollbackTransactionError(errors.Join(err, rbErr, ErrRollbackTransaction))
 		}
 		return err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("%w: %v", ErrCommitTransaction, err)
+		return fault.CommitTransactionError(errors.Join(err, ErrCommitTransaction))
 	}
 
 	return nil

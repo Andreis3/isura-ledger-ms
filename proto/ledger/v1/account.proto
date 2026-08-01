@@ -7,13 +7,12 @@ option go_package = "github.com/andreis3/isura-ledger-ms/internal/transport/grpc
 // ─── CreateAccount ───────────────────────────────────────────
 
 // Tipos contábeis do motor double-entry
-enum AccountingType {
-  ACCOUNTING_TYPE_UNSPECIFIED = 0;
-  ACCOUNTING_TYPE_ASSET = 1;       // Ativo (Reservas/Empréstimos)
-  ACCOUNTING_TYPE_LIABILITY = 2;   // Passivo (Contas de clientes)
-  ACCOUNTING_TYPE_EQUITY = 3;      // Patrimônio Líquido
-  ACCOUNTING_TYPE_REVENUE = 4;     // Receita de Tarifas
-  ACCOUNTING_TYPE_EXPENSE = 5;     // Despesas operacionais
+enum AccountType {
+  ACCOUNT_TYPE_UNSPECIFIED = 0;
+  ACCOUNT_TYPE_ASSET = 1;       // Ativo (Reservas/Empréstimos)
+  ACCOUNT_TYPE_LIABILITY = 2;   // Passivo (Contas de clientes)
+  ACCOUNT_TYPE_REVENUE = 3;     // Receita de Tarifas
+  ACCOUNT_TYPE_EXPENSE = 4;     // Despesas operacionais
 }
 
 // Moedas suportadas pelo motor
@@ -29,7 +28,7 @@ message CreateAccountRequest {
   string account_external_id = 2;
   string account_number = 3;      // Número interno ou agência/conta
   string tax_id = 4;
-  AccountingType accounting_type = 5; // Enum forte
+  AccountType account_type = 5; // Enum forte
   Currency currency = 6;          // Enum forte
 }
 
@@ -46,17 +45,4 @@ message GetBalanceRequest {
 message GetBalanceResponse {
   int64 balance = 1;
   string currency = 2;
-}
-
-// Representa um erro detalhado de validação por campo
-message FieldError {
-  string field = 1;
-  string message = 2;
-}
-
-// Estrutura de erro padronizada para retornos customizados (caso não use o google.rpc.Status nativo)
-message ErrorResponse {
-  string code = 1;
-  string message = 2;
-  repeated FieldError fields = 3;
 }

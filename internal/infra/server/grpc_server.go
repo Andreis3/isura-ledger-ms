@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application/command"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/dependency"
 	"github.com/andreis3/isura-ledger-ms/internal/transport/grpc/handler"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -18,11 +19,11 @@ import (
 
 type GRPCServer struct {
 	grpcServer *grpc.Server
-	deps       *BaseDeps
+	deps       *dependency.BaseDeps
 }
 
 func NewGRPCServer(
-	deps *BaseDeps,
+	deps *dependency.BaseDeps,
 ) *GRPCServer {
 
 	return &GRPCServer{
@@ -69,7 +70,7 @@ func (s *GRPCServer) Start() error {
 
 func (s *GRPCServer) buildLedgerServer() *grpcTransport.LedgerServer {
 
-	composer := NewComposer(s.deps)
+	composer := dependency.NewComposer(s.deps)
 
 	accountRepo := composer.BuildAccountRepo()
 

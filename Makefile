@@ -12,6 +12,9 @@ run-app:
 run-app-logs:
 	@echo "Running app export archive logs"
 	@go run cmd/main.go > ~/tmp/app/customers-ms.log 2>&1
+air:
+	@echo "Running with reload"
+	@air -c .air.toml
 
 unit:
 	@go test ./tests/unit/... --tags=unit -v
@@ -66,6 +69,7 @@ migrate:
 	  --to "file://$(SCHEMA_DIR)"
 
 
+
 .PHONY: build,
 		up,
 		down,
@@ -79,4 +83,5 @@ migrate:
 		integration,
 		proto-lint,
 		proto-gen,
-		migrate
+		migrate,
+		air

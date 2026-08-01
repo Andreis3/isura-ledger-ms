@@ -1,32 +1,29 @@
 package rest
 
 import (
+	"github.com/andreis3/isura-ledger-ms/internal/infra/dependency"
 	"github.com/go-chi/chi/v5"
 
-	"github.com/andreis3/isura-ledger-ms/internal/application"
-	"github.com/andreis3/isura-ledger-ms/internal/infra/configs"
-	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres"
 	"github.com/andreis3/isura-ledger-ms/internal/transport/rest/module"
 )
 
 type SetupDeps struct {
-	Mux      *chi.Mux
-	Postgres *postgres.Postgres
-	Log      application.Logger
-	Conf     *configs.Configs
+	Mux  *chi.Mux
+	Deps *dependency.BaseDeps
 }
 
-func Setup(deps *SetupDeps) {
+func Setup(st *SetupDeps) {
 	NewRegisterRoutes(
-		deps.Mux,
-		deps.Log,
-		BuildRoutes(deps),
+		st.Mux,
+		st.Deps.Log,
+		BuildRoutes(st),
 	).Register()
 }
 
-func BuildRoutes(deps *SetupDeps) []ModuleRoutes {
+func BuildRoutes(st *SetupDeps) []ModuleRoutes {
 	return []ModuleRoutes{
-		module.NewHealthCheck(deps.Postgres, deps.Conf.ApplicationName),
+		module.NewHealthCheck(st.Deps.Pg, st.Deps.Cfg.ApplicationName),
 		module.NewMetrics(),
+		module.NewAccountModule(*st.Deps),
 	}
 }

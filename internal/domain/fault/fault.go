@@ -16,10 +16,26 @@ const (
 	CodeBadRequest          Code = "ERR_400"
 	CodeUnauthorized        Code = "ERR_401"
 	CodeForbidden           Code = "ERR_403"
-	CodeNotFound            Code = "ERR_404"
 	CodeConflict            Code = "ERR_409"
-	CodeInternal            Code = "ERR_500"
 	CodeUnprocessableEntity Code = "ERR_422"
+
+	// ─── Erros de Cliente (ILMS-1xxx) ─────────────────────────
+	CodeInvalidEntity        Code = "ILMS-1001" // Entidade inválida (validação)
+	CodeNotFound             Code = "ILMS-1002" // Recurso não encontrado
+	CodeAlreadyExists        Code = "ILMS-1003" // Recurso já existe
+	CodeInsufficientBalance  Code = "ILMS-1004" // Saldo insuficiente
+	CodeDuplicateTransaction Code = "ILMS-1005" // Transação duplicada
+	CodeInvalidTransfer      Code = "ILMS-1006" // Transferência inválida
+
+	// ─── Erros de Servidor (ILMS-2xxx) ─────────────────────────
+	CodeDatabaseError   Code = "ILMS-2001" // Erro no banco de dados
+	CodeCacheError      Code = "ILMS-2002" // Erro no cache
+	CodeExternalService Code = "ILMS-2003" // Erro em serviço externo
+	CodeTimeoutError    Code = "ILMS-2004" // Timeout
+
+	// ─── Erros Genéricos (ILMS-9xxx) ──────────────────────────
+	CodeInternal Code = "ILMS-9001" // Erro interno
+	CodeUnknown  Code = "ILMS-9999" // Erro desconhecido
 )
 
 // DomainError é o erro rico do domínio.
@@ -39,10 +55,10 @@ type ValidationError struct {
 func NewValidationError(fields map[string]any) *DomainError {
 	return &DomainError{
 		Code:            CodeBadRequest,
-		Cause:           errors.New("validation failed"),
+		Cause:           errors.New("Invalid entity"),
 		Fields:          fields,
-		Origin:          callerName(2),
-		FriendlyMessage: "validation failed",
+		Origin:          CallerName(2),
+		FriendlyMessage: "Some of the information entered is incorrect; please review it and try again.",
 	}
 }
 
@@ -102,7 +118,7 @@ func New(code Code, friendly string, cause error) *DomainError {
 		Code:            code,
 		FriendlyMessage: friendly,
 		Cause:           cause,
-		Origin:          callerName(2),
+		Origin:          CallerName(2),
 	}
 }
 
@@ -113,7 +129,7 @@ func NewWithFields(code Code, friendly string, fields map[string]any) *DomainErr
 		Code:            code,
 		FriendlyMessage: friendly,
 		Fields:          fields,
-		Origin:          callerName(2),
+		Origin:          CallerName(2),
 		Cause:           nil,
 	}
 }
@@ -125,11 +141,11 @@ func Wrap(code Code, friendly string, cause error) *DomainError {
 		Code:            code,
 		FriendlyMessage: friendly,
 		Cause:           cause,
-		Origin:          callerName(2),
+		Origin:          CallerName(2),
 	}
 }
 
-func callerName(skip int) string {
+func CallerName(skip int) string {
 	pc, file, line, ok := runtime.Caller(skip)
 	if !ok {
 		return "unknown"

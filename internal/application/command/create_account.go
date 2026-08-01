@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
 	"github.com/google/uuid"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
@@ -14,15 +15,6 @@ import (
 )
 
 var ErrAccountAlreadyExists = errors.New("account already exists")
-
-type CreateAccountInput struct {
-	OwnerID           string
-	AccountExternalID string
-	AccountNumber     string
-	TaxID             string
-	AccountingType    string
-	Currency          string
-}
 
 type CreateAccount struct {
 	accountRepository account.Repository
@@ -45,7 +37,7 @@ func NewCreateAccount(
 	}
 }
 
-func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (string, error) {
+func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInput) (*dto.CreateAccountOutput, error) {
 	start := time.Now()
 	ctx, span := c.tracer.Start(ctx, "CreateAccount.Execute")
 	tracerID := span.SpanContext().TraceID()
@@ -54,7 +46,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 
 	c.log.InfoJSON("CreateAccount received request",
 		slog.String("trace_id", tracerID),
-		slog.Any("input", MaskInput[CreateAccountInput](input)),
+		slog.Any("input", MaskInput[dto.CreateAccountInput](input)),
 	)
 
 	accountEntity, err := c.validate(input)
@@ -66,7 +58,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				fault.Attrs(err)...)...,
 		)
 		c.metrics.RecordCommandTotal("CreateAccount", "failure")
-		return "", err
+		return nil, err
 	}
 
 	existing, err := c.accountRepository.FindByAccountExternalID(ctx, accountEntity.AccountExternalID)
@@ -78,18 +70,18 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				fault.Attrs(err)...)...,
 		)
 		c.metrics.RecordCommandTotal("CreateAccount", "failure")
-		return "", err
+		return nil, err
 	}
 
 	if existing != nil {
-		domainErr := fault.Wrap(fault.CodeConflict, "account already exists", ErrAccountAlreadyExists)
-		c.log.WarnJSON("CreateAccount account already exists",
-			append([]any{
-				slog.String("trace_id", tracerID),
-				slog.String("account_external_id", accountEntity.AccountExternalID)},
-				fault.Attrs(domainErr)...)...,
+		c.log.InfoJSON("CreateAccount account already exists",
+			slog.String("trace_id", tracerID),
+			slog.String("account_external_id", accountEntity.AccountExternalID),
 		)
-		return string(existing.ID), nil
+		c.metrics.RecordCommandTotal("CreateAccount", "exist")
+		return &dto.CreateAccountOutput{
+			AccountID: new(string(existing.ID)),
+		}, nil
 	}
 
 	accountID := account.AccountID(uuid.New().String())
@@ -102,7 +94,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				fault.Attrs(err)...)...,
 		)
 		c.metrics.RecordCommandTotal("CreateAccount", "failure")
-		return "", err
+		return nil, err
 	}
 
 	err = c.accountRepository.Save(ctx, accountEntity)
@@ -114,7 +106,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 				fault.Attrs(err)...)...,
 		)
 		c.metrics.RecordCommandTotal("CreateAccount", "failure")
-		return "", err
+		return nil, err
 	}
 
 	c.log.InfoJSON("CreateAccount account created successfully",
@@ -123,10 +115,12 @@ func (c *CreateAccount) Execute(ctx context.Context, input CreateAccountInput) (
 		slog.String("account_external_id", accountEntity.AccountExternalID),
 	)
 
-	return string(accountID), nil
+	return &dto.CreateAccountOutput{
+		AccountID: new(string(accountID)),
+	}, nil
 }
 
-func (c *CreateAccount) validate(input CreateAccountInput) (*account.Account, error) {
+func (c *CreateAccount) validate(input dto.CreateAccountInput) (*account.Account, error) {
 	id := uuid.New().String()
 	now := time.Now()
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/application/command"
+	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 	pb "github.com/andreis3/isura-ledger-ms/internal/transport/grpc/pb/ledger/v1"
@@ -33,36 +34,34 @@ func (h *CreateAccountHandler) Handle(ctx context.Context, req *pb.CreateAccount
 	ctx, span := h.tracer.Start(ctx, "CreateAccountHandler.Handle")
 	defer span.End()
 
-	input := command.CreateAccountInput{
+	input := dto.CreateAccountInput{
 		OwnerID:           req.GetOwnerId(),
-		AccountExternalID: req.GetAccountNumber(),
+		AccountExternalID: req.GetAccountExternalId(),
 		AccountNumber:     req.GetAccountNumber(),
 		TaxID:             req.GetTaxId(),
 		AccountingType:    string(h.AccountTypeTranslate(req)),
 		Currency:          string(h.CurrencyTranslate(req)),
 	}
 
-	accountID, err := h.useCase.Execute(ctx, input)
+	response, err := h.useCase.Execute(ctx, input)
 	if err != nil {
 		return nil, translator.ToGRPCError(err)
 	}
 
 	return &pb.CreateAccountResponse{
-		AccountId: accountID,
+		AccountId: *response.AccountID,
 	}, nil
 }
 
 func (h *CreateAccountHandler) AccountTypeTranslate(req *pb.CreateAccountRequest) account.AccountType {
-	switch req.GetAccountingType() {
-	case pb.AccountingType_ACCOUNTING_TYPE_ASSET:
+	switch req.GetAccountType() {
+	case pb.AccountType_ACCOUNT_TYPE_ASSET:
 		return account.Asset
-	case pb.AccountingType_ACCOUNTING_TYPE_LIABILITY:
+	case pb.AccountType_ACCOUNT_TYPE_LIABILITY:
 		return account.Liability
-	case pb.AccountingType_ACCOUNTING_TYPE_EQUITY:
+	case pb.AccountType_ACCOUNT_TYPE_REVENUE:
 		return account.Revenue
-	case pb.AccountingType_ACCOUNTING_TYPE_REVENUE:
-		return account.Expense
-	case pb.AccountingType_ACCOUNTING_TYPE_EXPENSE:
+	case pb.AccountType_ACCOUNT_TYPE_EXPENSE:
 		return account.Expense
 	default:
 		return ""
