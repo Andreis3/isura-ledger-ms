@@ -114,16 +114,18 @@ isura-ledger-ms/
 │   │   │   ├── otel_tracer.go       # Implementação do Tracer OpenTelemetry
 │   │   │   └── prometheus.go        # Registro do subsistema de métricas Prometheus
 │   │   ├── postgres/
-│   │   │   database/
+│   │   │   ├── database/
 │   │   │   │   ├── helper.go        # Funções auxiliares de conversão de tipos pgx
 │   │   │   │   └── querier.go       # Interface unificada para DB Pool e Transações (Tx)
-│   │   │   model/
-│   │   │       ├── account.go       # Model Postgres para Account
-│   │   │       ├── entry.go         # Model Postgres para Entry
-│   │   │       ├── outbox.go        # Model Postgres para Outbox
-│   │   │       └── transaction.go   # Model Postgres para Transaction
-│   │   │   repository/
-│   │   │   │   observability/
+│   │   │   ├── model/
+│   │   │   │   ├── account.go       # Model Postgres para Account
+│   │   │   │   ├── entry.go         # Model Postgres para Entry
+│   │   │   │   ├── outbox.go        # Model Postgres para Outbox
+│   │   │   │   └── transaction.go   # Model Postgres para Transaction
+│   │   │   ├── repository/
+│   │   │   │   ├── criteria/
+│   │   │   │   │   └── account.go   # Construtor dinâmico de critérios (Query & Args) para contas
+│   │   │   │   ├── observability/
 │   │   │   │   │   ├── account_observability.go     # Decorator para métricas/traces de contas
 │   │   │   │   │   ├── outbox_observability.go      # Decorator para métricas/traces de outbox
 │   │   │   │   │   └── transaction_observability.go # Decorator para métricas/traces de transações
@@ -131,57 +133,55 @@ isura-ledger-ms/
 │   │   │   │   ├── outbox.go        # Repositório Postgres concreto para outbox
 │   │   │   │   ├── resolve_db.go    # Helper para extrair Transação ativa do Contexto
 │   │   │   │   └── transaction.go   # Repositório Postgres concreto para transações
-│   │   │   uow/
+│   │   │   ├── uow/
 │   │   │   │   └── uow.go           # Implementação concreta do Unit of Work com pgx.Tx
 │   │   │   └── postgres.go          # Inicialização, pool e ping da conexão PostgreSQL
 │   │   └── server/
 │   │       ├── graceful_shutdown.go # Controle de encerramento limpo dos servidores
 │   │       ├── grpc_server.go       # Ciclo de vida, interceptors e registro do gRPC
 │   │       └── http_server.go       # Ciclo de vida e configuração do servidor HTTP (Chi)
-│   ├── transport/
-│   │   ├── grpc/
-│   │   │   ├── handler/
-│   │   │   │   ├── create_account_handler.go     # Traduz requisições Protobuf ↔ Command de Conta
-│   │   │   │   └── create_transaction_handler.go # Traduz requisições Protobuf ↔ Command de Transação
-│   │   │   ├── interceptor/
-│   │   │   │   ├── logging.go       # Interceptor gRPC de logs estruturados
-│   │   │   │   ├── metrics.go       # Interceptor gRPC de coleta de métricas
-│   │   │   │   └── tracing.go       # Interceptor gRPC de rastreamento distribuído
-│   │   │   ├── pb/ledger/v1/        # Stubs `.go` gerados automaticamente pelo Protobuf/Buf
-│   │   │   │   ├── account.pb.go
-│   │   │   │   ├── ledger.pb.go
-│   │   │   │   ├── ledger_grpc.pb.go
-│   │   │   │   └── transaction.pb.go
-│   │   │   ├── translator/
-│   │   │   │   └── fault_translator.go # Traduz erros de domínio para gRPC Status Codes
-│   │   │   ├── ledger_module.go     # Módulo gRPC específico do Ledger
-│   │   │   ├── module.go            # Interface base para módulos gRPC
-│   │   │   ├── server.go            # Definição estrutural do LedgerServer gRPC
-│   │   │   └── server_registry.go   # Registrador dinâmico de módulos gRPC
-│   │   └── rest/
-│   │       ├── decoder/
-│   │       │   ├── request.go       # Decodificador de corpo HTTP com validação de erros JSON
-│   │       │   ├── response_error.go   # Serializador padronizado de erros REST
-│   │       │   └── response_sucess.go  # Serializador padronizado de sucesso REST
-│   │       ├── handler/
-│   │       │   ├── create_account_handler.go # Handler HTTP para criação de contas
-│   │       │   └── healthcheck_handler.go    # Handler de Health Check com métricas do runtime Go
-│   │       ├── middleware/
-│   │       │   ├── logging.go       # Middleware HTTP de logs de requisição
-│   │       │   ├── metric.go        # Middleware HTTP de métricas Prometheus
-│   │       │   └── tracing.go       # Middleware HTTP para OpenTelemetry Spans
-│   │       ├── module/
-│   │       │   ├── account_module.go     # Agrupador de rotas REST de contas
-│   │       │   ├── healthcheck_module.go # Agrupador de rotas REST de healthcheck
-│   │       │   └── metrics_module.go     # Exposição do endpoint `/metrics` do Prometheus
-│   │       ├── register.go          # Registrador central de rotas no roteador Chi
-│   │       ├── setup.go             # Inicialização e injeção do roteador Chi REST
-│   │       ├── translator/
-│   │       │   └── fault_translator.go # Mapeia códigos de domínio para HTTP Status Codes
-│   │       └── types/
-│   │           └── route.go         # Tipagens e estruturas auxiliares para roteamento HTTP
-│   └── util/
-│       └── constants.go             # Constantes utilitárias globais (tipos de handler)
+│   └── transport/
+│       ├── grpc/
+│       │   ├── handler/
+│       │   │   ├── create_account_handler.go     # Traduz requisições Protobuf ↔ Command de Conta
+│       │   │   └── create_transaction_handler.go # Traduz requisições Protobuf ↔ Command de Transação
+│       │   ├── interceptor/
+│       │   │   ├── logging.go       # Interceptor gRPC de logs estruturados
+│       │   │   ├── metrics.go       # Interceptor gRPC de coleta de métricas
+│       │   │   └── tracing.go       # Interceptor gRPC de rastreamento distribuído
+│       │   ├── pb/ledger/v1/        # Stubs `.go` gerados automaticamente pelo Protobuf/Buf
+│       │   │   ├── account.pb.go
+│       │   │   ├── ledger.pb.go
+│       │   │   ├── ledger_grpc.pb.go
+│       │   │   └── transaction.pb.go
+│       │   ├── translator/
+│       │   │   └── fault_translator.go # Traduz erros de domínio para gRPC Status Codes
+│       │   ├── ledger_module.go     # Módulo gRPC específico do Ledger
+│       │   ├── module.go            # Interface base para módulos gRPC
+│       │   ├── server.go            # Definição estrutural do LedgerServer gRPC
+│       │   └── server_registry.go   # Registrador dinâmico de módulos gRPC
+│       └── rest/
+│           ├── decoder/
+│           │   ├── request.go       # Decodificador de corpo HTTP com validação de erros JSON
+│           │   ├── response_error.go   # Serializador padronizado de erros REST
+│           │   └── response_sucess.go  # Serializador padronizado de sucesso REST
+│           ├── handler/
+│           │   ├── create_account_handler.go # Handler HTTP para criação de contas
+│           │   └── healthcheck_handler.go    # Handler de Health Check com métricas do runtime Go
+│           ├── middleware/
+│           │   ├── logging.go       # Middleware HTTP de logs de requisição
+│           │   ├── metric.go        # Middleware HTTP de métricas Prometheus
+│           │   └── tracing.go       # Middleware HTTP para OpenTelemetry Spans
+│           ├── module/
+│           │   ├── account_module.go     # Agrupador de rotas REST de contas
+│           │   ├── healthcheck_module.go # Agrupador de rotas REST de healthcheck
+│           │   └── metrics_module.go     # Exposição do endpoint `/metrics` do Prometheus
+│           ├── register.go          # Registrador central de rotas no roteador Chi
+│           ├── setup.go             # Inicialização e injeção do roteador Chi REST
+│           ├── translator/
+│           │   └── fault_translator.go # Mapeia códigos de domínio para HTTP Status Codes
+│           └── types/
+│               └── route.go         # Tipagens e estruturas auxiliares para roteamento HTTP
 ├── payload.json                      # Payload de exemplo para testes de requisição
 ├── prometheus.yml                    # Configuração de scraping do Prometheus
 ├── proto/
