@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 	"github.com/google/uuid"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
@@ -61,7 +62,12 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 		return nil, err
 	}
 
-	existing, err := c.accountRepository.FindByAccountExternalID(ctx, accountEntity.AccountExternalID)
+	parmsCriteria := criteria.AccountCriteria{
+		AccountExternalID: &accountEntity.AccountExternalID,
+		Currency:          new(string(accountEntity.Currency)),
+	}
+
+	existing, err := c.accountRepository.FindAccount(ctx, parmsCriteria)
 	if err != nil && !errors.Is(err, account.ErrAccountNotFound) {
 		c.log.CriticalJSON("CreateAccount failed to find account by external ID",
 			append([]any{

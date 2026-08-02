@@ -8,6 +8,7 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/database"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/model"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -57,24 +58,26 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
 	return nil
 }
 
-func (r *AccountRepository) FindByID(ctx context.Context, id account.AccountID) (*account.Account, error) {
+func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.AccountCriteria) (*account.Account, error) {
 	db := resolveDB(ctx, r.db)
 
-	query := `SELECT 
-				a.id, 
-				a.owner_id,
-				a.account_external_id,
-				a.account_number,
-				a.tax_id,
-				a.account_type,
-				a.currency,
-				a.created_at,
-				a.updated_at
-			FROM accounts a WHERE a.id = $1`
-
+	baseQuery := `
+        SELECT 
+            id, 
+            owner_id, 
+            account_external_id, 
+            account_number, 
+            tax_id, 
+            account_type, 
+            currency, 
+            created_at, 
+            updated_at 
+        FROM accounts 
+        WHERE 1=1
+    `
+	query, args := criteria.GetCriteria(baseQuery, params)
 	var accountModel model.Account
-
-	err := db.QueryRow(ctx, query, id).Scan(
+	err := db.QueryRow(ctx, query, args...).Scan(
 		&accountModel.ID,
 		&accountModel.OwnerID,
 		&accountModel.AccountExternalID,
@@ -88,59 +91,15 @@ func (r *AccountRepository) FindByID(ctx context.Context, id account.AccountID) 
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fault.FindAccountNotFoundError(err)
-		}
-		return nil, err
-	}
-
-	account, err := model.ToAccountDomain(accountModel)
-	if err != nil {
-		return nil, err
-	}
-
-	return account, nil
-}
-
-func (r *AccountRepository) FindByAccountExternalID(ctx context.Context, AccountExternalID string) (*account.Account, error) {
-	db := resolveDB(ctx, r.db)
-
-	query := `SELECT 
-				a.id, 
-				a.owner_id,
-				a.account_external_id,
-				a.account_number,
-				a.tax_id,
-				a.account_type,
-				a.currency,
-				a.created_at,
-				a.updated_at
-			FROM accounts a WHERE a.account_external_id = $1`
-
-	var accountModel model.Account
-
-	err := db.QueryRow(ctx, query, AccountExternalID).Scan(
-		&accountModel.ID,
-		&accountModel.OwnerID,
-		&accountModel.AccountExternalID,
-		&accountModel.AccountNumber,
-		&accountModel.TaxID,
-		&accountModel.AccountType,
-		&accountModel.Currency,
-		&accountModel.CreatedAt,
-		&accountModel.UpdatedAt,
-	)
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, nil // Retorna erro padronizado de não encontrado
 		}
 		return nil, fault.FindAccountError(err)
 	}
 
-	account, err := model.ToAccountDomain(accountModel)
+	accDomain, err := model.ToAccountDomain(accountModel)
 	if err != nil {
 		return nil, err
 	}
 
-	return account, nil
+	return accDomain, nil
 }

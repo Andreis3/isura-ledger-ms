@@ -3,6 +3,8 @@ package account
 import (
 	"context"
 	"errors"
+
+	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 )
 
 var (
@@ -11,6 +13,5 @@ var (
 
 type Repository interface {
 	Save(ctx context.Context, account *Account) error
-	FindByID(ctx context.Context, id AccountID) (*Account, error)
-	FindByAccountExternalID(ctx context.Context, externalID string) (*Account, error)
+	FindAccount(ctx context.Context, params criteria.AccountCriteria) (*Account, error)
 }
