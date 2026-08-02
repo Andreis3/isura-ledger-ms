@@ -6,6 +6,7 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 )
 
 type ObservabilityAccountRepo struct {
@@ -45,7 +46,7 @@ func (r *ObservabilityAccountRepo) Save(ctx context.Context, account *account.Ac
 	return nil
 }
 
-func (r *ObservabilityAccountRepo) FindByID(ctx context.Context, id account.AccountID) (*account.Account, error) {
+func (r *ObservabilityAccountRepo) FindAccount(ctx context.Context, params criteria.AccountCriteria) (*account.Account, error) {
 	ctx, span := r.tracer.Start(ctx, "AccountRepository.FindByID")
 	defer span.End()
 
@@ -58,30 +59,7 @@ func (r *ObservabilityAccountRepo) FindByID(ctx context.Context, id account.Acco
 			float64(time.Since(start).Milliseconds()))
 	}()
 
-	account, err := r.repo.FindByID(ctx, id)
-
-	if err != nil {
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return account, nil
-}
-
-func (r *ObservabilityAccountRepo) FindByAccountExternalID(ctx context.Context, externalID string) (*account.Account, error) {
-	ctx, span := r.tracer.Start(ctx, "AccountRepository.FindByExternalID")
-	defer span.End()
-
-	start := time.Now()
-	defer func() {
-		r.metric.RecordDBQueryDuration(
-			"postgres",
-			"accounts",
-			"find_by_external_id",
-			float64(time.Since(start).Milliseconds()))
-	}()
-
-	account, err := r.repo.FindByAccountExternalID(ctx, externalID)
+	account, err := r.repo.FindAccount(ctx, params)
 
 	if err != nil {
 		span.RecordError(err)
