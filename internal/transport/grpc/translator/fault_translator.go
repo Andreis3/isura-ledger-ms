@@ -18,13 +18,22 @@ type ProtocolError struct {
 
 // translator é o mapa interno de conversão Code → protocolos.
 var translator = map[fault.Code]ProtocolError{
-	fault.CodeBadRequest:          {GRPCCode: codes.InvalidArgument},
-	fault.CodeUnauthorized:        {GRPCCode: codes.Unauthenticated},
-	fault.CodeForbidden:           {GRPCCode: codes.PermissionDenied},
-	fault.CodeNotFound:            {GRPCCode: codes.NotFound},
-	fault.CodeConflict:            {GRPCCode: codes.AlreadyExists},
-	fault.CodeUnprocessableEntity: {GRPCCode: codes.InvalidArgument},
-	fault.CodeInternal:            {GRPCCode: codes.Internal},
+	fault.CodeBadRequest:           {GRPCCode: codes.InvalidArgument},
+	fault.CodeUnauthorized:         {GRPCCode: codes.Unauthenticated},
+	fault.CodeForbidden:            {GRPCCode: codes.PermissionDenied},
+	fault.CodeNotFound:             {GRPCCode: codes.NotFound},
+	fault.CodeConflict:             {GRPCCode: codes.AlreadyExists},
+	fault.CodeUnprocessableEntity:  {GRPCCode: codes.InvalidArgument},
+	fault.CodeInternal:             {GRPCCode: codes.Internal},
+	fault.CodeDatabaseError:        {GRPCCode: codes.Internal},
+	fault.CodeInvalidEntity:        {GRPCCode: codes.InvalidArgument},
+	fault.CodeUnknown:              {GRPCCode: codes.Unknown},
+	fault.CodeCacheError:           {GRPCCode: codes.Internal},
+	fault.CodeExternalService:      {GRPCCode: codes.Unavailable},
+	fault.CodeTimeoutError:         {GRPCCode: codes.DeadlineExceeded},
+	fault.CodeInvalidTransfer:      {GRPCCode: codes.InvalidArgument},
+	fault.CodeInsufficientBalance:  {GRPCCode: codes.InvalidArgument},
+	fault.CodeDuplicateTransaction: {GRPCCode: codes.InvalidArgument},
 }
 
 // GRPCStatus retorna o status GRPC correspondente ao erro.

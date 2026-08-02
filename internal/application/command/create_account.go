@@ -15,8 +15,6 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 )
 
-var ErrAccountAlreadyExists = errors.New("account already exists")
-
 type CreateAccount struct {
 	accountRepository account.Repository
 	log               application.Logger
