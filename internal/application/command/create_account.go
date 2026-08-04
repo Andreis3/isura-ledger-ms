@@ -45,7 +45,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 
 	c.log.InfoJSON("CreateAccount received request",
 		slog.String("trace_id", tracerID),
-		slog.Any("input", MaskInput[dto.CreateAccountInput](input)),
+		slog.Any("input", MaskSlogValue[dto.CreateAccountInput](input)),
 	)
 
 	accountEntity, err := c.validate(input)
@@ -130,11 +130,9 @@ func (c *CreateAccount) validate(input dto.CreateAccountInput) (*account.Account
 
 	return account.NewAccountBuilder().
 		WithID(id).
-		WithOwnerID(input.OwnerID).
 		WithAccountExternalID(input.AccountExternalID).
 		WithAccountNumber(input.AccountNumber).
 		WithTaxID(input.TaxID).
-		WithAccountType(input.AccountingType).
 		WithCurrency(input.Currency).
 		WithCreatedAt(now).
 		WithUpdatedAt(now).

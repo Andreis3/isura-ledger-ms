@@ -17,30 +17,12 @@ var (
 )
 
 type AccountID string
-type AccountType string
-
-const (
-	Asset     AccountType = "ASSET"
-	Liability AccountType = "LIABILITY"
-	Revenue   AccountType = "REVENUE"
-	Expense   AccountType = "EXPENSE"
-)
-
-func (a AccountType) IsValid() bool {
-	switch a {
-	case Asset, Liability, Revenue, Expense:
-		return true
-	}
-	return false
-}
 
 // AccountBuilder constrói Account passo a passo com validação
 type AccountBuilder struct {
 	id                AccountID
-	ownerID           string
 	accountExternalID string
 	accountNumber     string
-	accountType       AccountType
 	taxID             string
 	currency          money.Currency
 	createdAt         time.Time
@@ -55,11 +37,9 @@ func NewAccountBuilder() *AccountBuilder {
 
 type Account struct {
 	ID                AccountID
-	OwnerID           string
 	AccountExternalID string
 	AccountNumber     string
 	TaxID             string
-	AccountType       AccountType
 	Currency          money.Currency
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
@@ -70,14 +50,6 @@ func (b *AccountBuilder) WithID(id string) *AccountBuilder {
 	b.eval.CheckField(validator.NotBlank(id), "id", "cannot be blank")
 	b.eval.CheckField(validator.MatchesUUID(id), "id", "is not uuid")
 	b.id = AccountID(id)
-	return b
-}
-
-// WithOwnerID define o OwnerID (obrigatório)
-func (b *AccountBuilder) WithOwnerID(ownerID string) *AccountBuilder {
-	b.eval.CheckField(validator.NotBlank(ownerID), "owner_id", "cannot be blank")
-	b.eval.CheckField(validator.MatchesUUID(ownerID), "owner_id", "is not uuid")
-	b.ownerID = ownerID
 	return b
 }
 
@@ -108,17 +80,6 @@ func (b *AccountBuilder) WithTaxID(rawTaxID string) *AccountBuilder {
 		return b
 	}
 	b.taxID = cnpjObj.String()
-	return b
-}
-
-// WithAccountType define o tipo da conta (obrigatório)
-func (b *AccountBuilder) WithAccountType(accountType string) *AccountBuilder {
-	accountTypeUpperCase := strings.ToUpper(accountType)
-	b.eval.CheckField(validator.NotBlank(accountType), "account_type", "cannot be blank")
-
-	at := AccountType(accountTypeUpperCase)
-	b.eval.CheckField(at.IsValid(), "account_type", "invalid account type")
-	b.accountType = at
 	return b
 }
 
@@ -161,10 +122,8 @@ func (b *AccountBuilder) Build() (*Account, error) {
 
 	return &Account{
 		ID:                b.id,
-		OwnerID:           b.ownerID,
 		AccountExternalID: b.accountExternalID,
 		AccountNumber:     b.accountNumber,
-		AccountType:       b.accountType,
 		TaxID:             b.taxID,
 		Currency:          b.currency,
 		CreatedAt:         coalesceTime(b.createdAt, now),

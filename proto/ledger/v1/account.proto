@@ -6,15 +6,6 @@ option go_package = "github.com/andreis3/isura-ledger-ms/internal/transport/grpc
 
 // ─── CreateAccount ───────────────────────────────────────────
 
-// Tipos contábeis do motor double-entry
-enum AccountType {
-  ACCOUNT_TYPE_UNSPECIFIED = 0;
-  ACCOUNT_TYPE_ASSET = 1;       // Ativo (Reservas/Empréstimos)
-  ACCOUNT_TYPE_LIABILITY = 2;   // Passivo (Contas de clientes)
-  ACCOUNT_TYPE_REVENUE = 3;     // Receita de Tarifas
-  ACCOUNT_TYPE_EXPENSE = 4;     // Despesas operacionais
-}
-
 // Moedas suportadas pelo motor
 enum Currency {
   CURRENCY_UNSPECIFIED = 0;
@@ -24,12 +15,10 @@ enum Currency {
 }
 
 message CreateAccountRequest {
-  string owner_id = 1;         // Ex: ID do usuário/cliente no customers-ms
-  string account_external_id = 2;
-  string account_number = 3;      // Número interno ou agência/conta
-  string tax_id = 4;
-  AccountType account_type = 5; // Enum forte
-  Currency currency = 6;          // Enum forte
+  string account_external_id = 1;
+  string account_number = 2;      // Número interno ou agência/conta
+  string tax_id = 3;
+  Currency currency = 4;          // Enum forte
 }
 
 message CreateAccountResponse {

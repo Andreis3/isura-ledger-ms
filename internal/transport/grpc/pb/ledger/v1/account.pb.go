@@ -21,62 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Tipos contábeis do motor double-entry
-type AccountType int32
-
-const (
-	AccountType_ACCOUNT_TYPE_UNSPECIFIED AccountType = 0
-	AccountType_ACCOUNT_TYPE_ASSET       AccountType = 1 // Ativo (Reservas/Empréstimos)
-	AccountType_ACCOUNT_TYPE_LIABILITY   AccountType = 2 // Passivo (Contas de clientes)
-	AccountType_ACCOUNT_TYPE_REVENUE     AccountType = 3 // Receita de Tarifas
-	AccountType_ACCOUNT_TYPE_EXPENSE     AccountType = 4 // Despesas operacionais
-)
-
-// Enum value maps for AccountType.
-var (
-	AccountType_name = map[int32]string{
-		0: "ACCOUNT_TYPE_UNSPECIFIED",
-		1: "ACCOUNT_TYPE_ASSET",
-		2: "ACCOUNT_TYPE_LIABILITY",
-		3: "ACCOUNT_TYPE_REVENUE",
-		4: "ACCOUNT_TYPE_EXPENSE",
-	}
-	AccountType_value = map[string]int32{
-		"ACCOUNT_TYPE_UNSPECIFIED": 0,
-		"ACCOUNT_TYPE_ASSET":       1,
-		"ACCOUNT_TYPE_LIABILITY":   2,
-		"ACCOUNT_TYPE_REVENUE":     3,
-		"ACCOUNT_TYPE_EXPENSE":     4,
-	}
-)
-
-func (x AccountType) Enum() *AccountType {
-	p := new(AccountType)
-	*p = x
-	return p
-}
-
-func (x AccountType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AccountType) Descriptor() protoreflect.EnumDescriptor {
-	return file_ledger_v1_account_proto_enumTypes[0].Descriptor()
-}
-
-func (AccountType) Type() protoreflect.EnumType {
-	return &file_ledger_v1_account_proto_enumTypes[0]
-}
-
-func (x AccountType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AccountType.Descriptor instead.
-func (AccountType) EnumDescriptor() ([]byte, []int) {
-	return file_ledger_v1_account_proto_rawDescGZIP(), []int{0}
-}
-
 // Moedas suportadas pelo motor
 type Currency int32
 
@@ -114,11 +58,11 @@ func (x Currency) String() string {
 }
 
 func (Currency) Descriptor() protoreflect.EnumDescriptor {
-	return file_ledger_v1_account_proto_enumTypes[1].Descriptor()
+	return file_ledger_v1_account_proto_enumTypes[0].Descriptor()
 }
 
 func (Currency) Type() protoreflect.EnumType {
-	return &file_ledger_v1_account_proto_enumTypes[1]
+	return &file_ledger_v1_account_proto_enumTypes[0]
 }
 
 func (x Currency) Number() protoreflect.EnumNumber {
@@ -127,17 +71,15 @@ func (x Currency) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Currency.Descriptor instead.
 func (Currency) EnumDescriptor() ([]byte, []int) {
-	return file_ledger_v1_account_proto_rawDescGZIP(), []int{1}
+	return file_ledger_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
 type CreateAccountRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	OwnerId           string                 `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"` // Ex: ID do usuário/cliente no customers-ms
-	AccountExternalId string                 `protobuf:"bytes,2,opt,name=account_external_id,json=accountExternalId,proto3" json:"account_external_id,omitempty"`
-	AccountNumber     string                 `protobuf:"bytes,3,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"` // Número interno ou agência/conta
-	TaxId             string                 `protobuf:"bytes,4,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
-	AccountType       AccountType            `protobuf:"varint,5,opt,name=account_type,json=accountType,proto3,enum=ledger.v1.AccountType" json:"account_type,omitempty"` // Enum forte
-	Currency          Currency               `protobuf:"varint,6,opt,name=currency,proto3,enum=ledger.v1.Currency" json:"currency,omitempty"`                             // Enum forte
+	AccountExternalId string                 `protobuf:"bytes,1,opt,name=account_external_id,json=accountExternalId,proto3" json:"account_external_id,omitempty"`
+	AccountNumber     string                 `protobuf:"bytes,2,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"` // Número interno ou agência/conta
+	TaxId             string                 `protobuf:"bytes,3,opt,name=tax_id,json=taxId,proto3" json:"tax_id,omitempty"`
+	Currency          Currency               `protobuf:"varint,4,opt,name=currency,proto3,enum=ledger.v1.Currency" json:"currency,omitempty"` // Enum forte
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -172,13 +114,6 @@ func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
 	return file_ledger_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *CreateAccountRequest) GetOwnerId() string {
-	if x != nil {
-		return x.OwnerId
-	}
-	return ""
-}
-
 func (x *CreateAccountRequest) GetAccountExternalId() string {
 	if x != nil {
 		return x.AccountExternalId
@@ -198,13 +133,6 @@ func (x *CreateAccountRequest) GetTaxId() string {
 		return x.TaxId
 	}
 	return ""
-}
-
-func (x *CreateAccountRequest) GetAccountType() AccountType {
-	if x != nil {
-		return x.AccountType
-	}
-	return AccountType_ACCOUNT_TYPE_UNSPECIFIED
 }
 
 func (x *CreateAccountRequest) GetCurrency() Currency {
@@ -358,14 +286,12 @@ var File_ledger_v1_account_proto protoreflect.FileDescriptor
 
 const file_ledger_v1_account_proto_rawDesc = "" +
 	"\n" +
-	"\x17ledger/v1/account.proto\x12\tledger.v1\"\x8b\x02\n" +
-	"\x14CreateAccountRequest\x12\x19\n" +
-	"\bowner_id\x18\x01 \x01(\tR\aownerId\x12.\n" +
-	"\x13account_external_id\x18\x02 \x01(\tR\x11accountExternalId\x12%\n" +
-	"\x0eaccount_number\x18\x03 \x01(\tR\raccountNumber\x12\x15\n" +
-	"\x06tax_id\x18\x04 \x01(\tR\x05taxId\x129\n" +
-	"\faccount_type\x18\x05 \x01(\x0e2\x16.ledger.v1.AccountTypeR\vaccountType\x12/\n" +
-	"\bcurrency\x18\x06 \x01(\x0e2\x13.ledger.v1.CurrencyR\bcurrency\"6\n" +
+	"\x17ledger/v1/account.proto\x12\tledger.v1\"\xb5\x01\n" +
+	"\x14CreateAccountRequest\x12.\n" +
+	"\x13account_external_id\x18\x01 \x01(\tR\x11accountExternalId\x12%\n" +
+	"\x0eaccount_number\x18\x02 \x01(\tR\raccountNumber\x12\x15\n" +
+	"\x06tax_id\x18\x03 \x01(\tR\x05taxId\x12/\n" +
+	"\bcurrency\x18\x04 \x01(\x0e2\x13.ledger.v1.CurrencyR\bcurrency\"6\n" +
 	"\x15CreateAccountResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\"C\n" +
@@ -373,13 +299,7 @@ const file_ledger_v1_account_proto_rawDesc = "" +
 	"\x13external_account_id\x18\x01 \x01(\tR\x11externalAccountId\"J\n" +
 	"\x12GetBalanceResponse\x12\x18\n" +
 	"\abalance\x18\x01 \x01(\x03R\abalance\x12\x1a\n" +
-	"\bcurrency\x18\x02 \x01(\tR\bcurrency*\x93\x01\n" +
-	"\vAccountType\x12\x1c\n" +
-	"\x18ACCOUNT_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
-	"\x12ACCOUNT_TYPE_ASSET\x10\x01\x12\x1a\n" +
-	"\x16ACCOUNT_TYPE_LIABILITY\x10\x02\x12\x18\n" +
-	"\x14ACCOUNT_TYPE_REVENUE\x10\x03\x12\x18\n" +
-	"\x14ACCOUNT_TYPE_EXPENSE\x10\x04*Z\n" +
+	"\bcurrency\x18\x02 \x01(\tR\bcurrency*Z\n" +
 	"\bCurrency\x12\x18\n" +
 	"\x14CURRENCY_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fCURRENCY_BRL\x10\x01\x12\x10\n" +
@@ -398,24 +318,22 @@ func file_ledger_v1_account_proto_rawDescGZIP() []byte {
 	return file_ledger_v1_account_proto_rawDescData
 }
 
-var file_ledger_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_ledger_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_ledger_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_ledger_v1_account_proto_goTypes = []any{
-	(AccountType)(0),              // 0: ledger.v1.AccountType
-	(Currency)(0),                 // 1: ledger.v1.Currency
-	(*CreateAccountRequest)(nil),  // 2: ledger.v1.CreateAccountRequest
-	(*CreateAccountResponse)(nil), // 3: ledger.v1.CreateAccountResponse
-	(*GetBalanceRequest)(nil),     // 4: ledger.v1.GetBalanceRequest
-	(*GetBalanceResponse)(nil),    // 5: ledger.v1.GetBalanceResponse
+	(Currency)(0),                 // 0: ledger.v1.Currency
+	(*CreateAccountRequest)(nil),  // 1: ledger.v1.CreateAccountRequest
+	(*CreateAccountResponse)(nil), // 2: ledger.v1.CreateAccountResponse
+	(*GetBalanceRequest)(nil),     // 3: ledger.v1.GetBalanceRequest
+	(*GetBalanceResponse)(nil),    // 4: ledger.v1.GetBalanceResponse
 }
 var file_ledger_v1_account_proto_depIdxs = []int32{
-	0, // 0: ledger.v1.CreateAccountRequest.account_type:type_name -> ledger.v1.AccountType
-	1, // 1: ledger.v1.CreateAccountRequest.currency:type_name -> ledger.v1.Currency
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 0: ledger.v1.CreateAccountRequest.currency:type_name -> ledger.v1.Currency
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_ledger_v1_account_proto_init() }
@@ -428,7 +346,7 @@ func file_ledger_v1_account_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ledger_v1_account_proto_rawDesc), len(file_ledger_v1_account_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,

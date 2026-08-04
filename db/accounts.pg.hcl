@@ -6,11 +6,6 @@ table "accounts" {
     null = false
   }
 
-  column "owner_id" {
-    type = varchar(36)
-    null = false
-  }
-
   column "account_external_id" {
     type = varchar(36)
     null = false
@@ -23,11 +18,6 @@ table "accounts" {
 
   column "tax_id" {
     type = varchar(14)
-    null = false
-  }
-
-  column "account_type" {
-    type = varchar(20)
     null = false
   }
 
