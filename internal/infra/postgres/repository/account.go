@@ -27,25 +27,21 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
 
 	query := `INSERT INTO 
     accounts (id, 
-              owner_id,
               account_external_id,
               account_number,
               tax_id,
-              account_type,
               currency,
               created_at,
               updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+    VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	accountModel := model.ToAccountModel(account)
 
 	_, err := db.Exec(ctx, query,
 		accountModel.ID,
-		accountModel.OwnerID,
 		accountModel.AccountExternalID,
 		accountModel.AccountNumber,
 		accountModel.TaxID,
-		accountModel.AccountType,
 		accountModel.Currency,
 		accountModel.CreatedAt,
 		accountModel.UpdatedAt,
@@ -64,11 +60,9 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
 	baseQuery := `
         SELECT 
             id, 
-            owner_id, 
             account_external_id, 
             account_number, 
             tax_id, 
-            account_type, 
             currency, 
             created_at, 
             updated_at 
@@ -79,11 +73,9 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
 	var accountModel model.Account
 	err := db.QueryRow(ctx, query, args...).Scan(
 		&accountModel.ID,
-		&accountModel.OwnerID,
 		&accountModel.AccountExternalID,
 		&accountModel.AccountNumber,
 		&accountModel.TaxID,
-		&accountModel.AccountType,
 		&accountModel.Currency,
 		&accountModel.CreatedAt,
 		&accountModel.UpdatedAt,

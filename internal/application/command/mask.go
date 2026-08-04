@@ -1,29 +1,47 @@
 package command
 
 import (
-	"fmt"
 	"log/slog"
-
-	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
+	"reflect"
+	"strings"
 )
 
-func MaskInput[T any](input T) slog.Value {
-	switch v := any(input).(type) {
-	case dto.CreateAccountInput:
-		return slog.GroupValue(
-			slog.String("account_external_id", v.AccountExternalID),
-			slog.String("accounting_type", v.AccountingType),
-			slog.String("currency", v.Currency),
-		)
-	case CreateTransactionInput:
-		return slog.GroupValue(
-			slog.String("idempotency_key", v.IdempotencyKey),
-			slog.String("debit_account_id", string(v.DebitAccountID)),
-			slog.String("credit_account_id", string(v.CreditAccountID)),
-			slog.String("amount", fmt.Sprintf("%d", v.Amount)),
-			slog.String("currency", string(v.Currency)),
-		)
-	default:
+// MaskSlogValue recebe qualquer struct e retorna um slog.GroupValue
+// com os campos mapeados a partir da tag json e mascarados conforme a tag sensitive.
+func MaskSlogValue[T any](input T) slog.Value {
+	v := reflect.ValueOf(input)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
 		return slog.AnyValue(input)
 	}
+
+	t := v.Type()
+	attrs := make([]slog.Attr, 0, v.NumField())
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+
+		// Nome da chave: usa a tag json, ou o nome do campo se não houver
+		jsonTag := fieldType.Tag.Get("json")
+		key := strings.Split(jsonTag, ",")[0]
+		if key == "" || key == "-" {
+			key = fieldType.Name
+		}
+
+		// Verifica a tag sensitive
+		sensitiveTag := fieldType.Tag.Get("sensitive")
+		var value slog.Value
+		if sensitiveTag == "true" {
+			value = slog.StringValue("*************")
+		} else {
+			value = slog.AnyValue(field.Interface())
+		}
+
+		attrs = append(attrs, slog.Attr{Key: key, Value: value})
+	}
+
+	return slog.GroupValue(attrs...)
 }

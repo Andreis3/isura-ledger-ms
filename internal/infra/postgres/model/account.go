@@ -9,10 +9,8 @@ import (
 type Account struct {
 	ID                pgtype.Text
 	AccountExternalID pgtype.Text
-	OwnerID           pgtype.Text
 	AccountNumber     pgtype.Text
 	TaxID             pgtype.Text
-	AccountType       pgtype.Text
 	Currency          pgtype.Text
 	CreatedAt         pgtype.Timestamptz
 	UpdatedAt         pgtype.Timestamptz
@@ -22,10 +20,6 @@ func ToAccountModel(entity *account.Account) Account {
 	return Account{
 		ID: pgtype.Text{
 			String: string(entity.ID),
-			Valid:  true,
-		},
-		OwnerID: pgtype.Text{
-			String: entity.OwnerID,
 			Valid:  true,
 		},
 		AccountExternalID: pgtype.Text{
@@ -38,10 +32,6 @@ func ToAccountModel(entity *account.Account) Account {
 		},
 		TaxID: pgtype.Text{
 			String: entity.TaxID,
-			Valid:  true,
-		},
-		AccountType: pgtype.Text{
-			String: string(entity.AccountType),
 			Valid:  true,
 		},
 		Currency: pgtype.Text{
@@ -63,11 +53,9 @@ func ToAccountDomain(model Account) (*account.Account, error) {
 
 	return account.NewAccountBuilder().
 		WithID(model.ID.String).
-		WithOwnerID(model.OwnerID.String).
 		WithAccountExternalID(model.AccountExternalID.String).
 		WithAccountNumber(model.AccountNumber.String).
 		WithTaxID(model.TaxID.String).
-		WithAccountType(model.AccountType.String).
 		WithCurrency(model.Currency.String).
 		WithCreatedAt(model.CreatedAt.Time).
 		WithUpdatedAt(model.UpdatedAt.Time).
