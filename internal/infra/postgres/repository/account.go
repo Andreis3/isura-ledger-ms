@@ -30,10 +30,11 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
               account_external_id,
               account_number,
               tax_id,
+              type,
               currency,
               created_at,
               updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)`
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
 	accountModel := model.ToAccountModel(account)
 
@@ -42,6 +43,7 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
 		accountModel.AccountExternalID,
 		accountModel.AccountNumber,
 		accountModel.TaxID,
+		accountModel.Type,
 		accountModel.Currency,
 		accountModel.CreatedAt,
 		accountModel.UpdatedAt,
@@ -62,7 +64,8 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
             id, 
             account_external_id, 
             account_number, 
-            tax_id, 
+            tax_id,
+            type,
             currency, 
             created_at, 
             updated_at 
@@ -76,6 +79,7 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
 		&accountModel.AccountExternalID,
 		&accountModel.AccountNumber,
 		&accountModel.TaxID,
+		&accountModel.Type,
 		&accountModel.Currency,
 		&accountModel.CreatedAt,
 		&accountModel.UpdatedAt,

@@ -3,7 +3,6 @@ package transaction
 type EntryID string
 type AccountID string
 type TransactionID string
-
 type StateMachineStatus map[TransactionStatus][]TransactionStatus
 
 var ValidStateMachine = StateMachineStatus{

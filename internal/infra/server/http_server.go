@@ -16,17 +16,17 @@ import (
 
 type HTTPServer struct {
 	server *http.Server
-	deps   dependency.BaseDeps
+	deps   *dependency.BaseDeps
 }
 
-func NewHTTPServer(deps dependency.BaseDeps) *HTTPServer {
+func NewHTTPServer(deps *dependency.BaseDeps) *HTTPServer {
 	start := time.Now()
 
 	mux := chi.NewRouter()
 
 	rest.Setup(&rest.SetupDeps{
 		Mux:  mux,
-		Deps: &deps,
+		Deps: deps,
 	})
 
 	server := &http.Server{

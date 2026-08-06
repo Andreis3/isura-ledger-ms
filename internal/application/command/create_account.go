@@ -133,6 +133,7 @@ func (c *CreateAccount) validate(input dto.CreateAccountInput) (*account.Account
 		WithAccountExternalID(input.AccountExternalID).
 		WithAccountNumber(input.AccountNumber).
 		WithTaxID(input.TaxID).
+		WithType(input.AccountType).
 		WithCurrency(input.Currency).
 		WithCreatedAt(now).
 		WithUpdatedAt(now).

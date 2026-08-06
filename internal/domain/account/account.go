@@ -7,6 +7,7 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/shared"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/tax"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/validator"
 )
@@ -18,12 +19,31 @@ var (
 
 type AccountID string
 
+type Type string
+
+const (
+	Asset     Type = "ASSET"     // Ativo (ex: Caixa, Contas no Banco Central, Direitos a receber)
+	Liability Type = "LIABILITY" // Passivo (ex: Saldo de contas correntes dos clientes)
+	Equity    Type = "EQUITY"    // Patrimônio Líquido (ex: Capital social)
+	Revenue   Type = "REVENUE"   // Receitas (ex: Taxas de Pix e boletos cobradas)
+	Expense   Type = "EXPENSE"   // Despesas (ex: Custos operacionais)
+)
+
+func (t Type) IsValid() bool {
+	switch t {
+	case Asset, Liability, Equity, Revenue, Expense:
+		return true
+	}
+	return false
+}
+
 // AccountBuilder constrói Account passo a passo com validação
 type AccountBuilder struct {
 	id                AccountID
 	accountExternalID string
 	accountNumber     string
 	taxID             string
+	accountType       Type
 	currency          money.Currency
 	createdAt         time.Time
 	updatedAt         time.Time
@@ -40,6 +60,7 @@ type Account struct {
 	AccountExternalID string
 	AccountNumber     string
 	TaxID             string
+	AccountType       Type
 	Currency          money.Currency
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
@@ -80,6 +101,14 @@ func (b *AccountBuilder) WithTaxID(rawTaxID string) *AccountBuilder {
 		return b
 	}
 	b.taxID = cnpjObj.String()
+	return b
+}
+
+func (b *AccountBuilder) WithType(accountType string) *AccountBuilder {
+	accountType = strings.ToUpper(accountType)
+	t := Type(accountType)
+	b.eval.CheckField(t.IsValid(), "type", "invalid account type")
+	b.accountType = t
 	return b
 }
 
@@ -125,16 +154,9 @@ func (b *AccountBuilder) Build() (*Account, error) {
 		AccountExternalID: b.accountExternalID,
 		AccountNumber:     b.accountNumber,
 		TaxID:             b.taxID,
+		AccountType:       b.accountType,
 		Currency:          b.currency,
-		CreatedAt:         coalesceTime(b.createdAt, now),
-		UpdatedAt:         coalesceTime(b.updatedAt, now),
+		CreatedAt:         shared.CoalesceTime(b.createdAt, now),
+		UpdatedAt:         shared.CoalesceTime(b.updatedAt, now),
 	}, nil
-}
-
-// coalesceTime retorna t se não for zero, caso contrário fallback
-func coalesceTime(t, fallback time.Time) time.Time {
-	if t.IsZero() {
-		return fallback
-	}
-	return t
 }

@@ -4,6 +4,7 @@ type CreateAccountInput struct {
 	AccountExternalID string `json:"account_external_id"`
 	AccountNumber     string `json:"account_number"`
 	TaxID             string `json:"tax_id" sensitive:"true"`
+	AccountType       string `json:"account_type"`
 	Currency          string `json:"currency"`
 }
 

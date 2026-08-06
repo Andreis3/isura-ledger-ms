@@ -3,6 +3,8 @@ package transaction
 import (
 	"errors"
 	"time"
+
+	"github.com/andreis3/isura-ledger-ms/internal/domain/validator"
 )
 
 var (
@@ -29,6 +31,16 @@ func (t TransactionStatus) IsValid() bool {
 	return false
 }
 
+type TransactionBuilder struct {
+	id             TransactionID
+	idempotencyKey string
+	status         TransactionStatus
+	entries        []*Entry
+	createdAt      time.Time
+	updatedAt      time.Time
+	eval           validator.Evaluator
+}
+
 type Transaction struct {
 	ID             TransactionID
 	IdempotencyKey string
@@ -38,37 +50,53 @@ type Transaction struct {
 	UpdatedAt      time.Time
 }
 
-func NewTransaction(transactionID TransactionID, idempotencyKey string) *Transaction {
-	createDate := time.Now()
-	return &Transaction{
-		ID:             transactionID,
-		IdempotencyKey: idempotencyKey,
-		Entries:        make([]*Entry, 0, 2),
-		Status:         Pending,
-		CreatedAt:      createDate,
-		UpdatedAt:      createDate,
-	}
+// NewTransactionBuilder initializes a new TransactionBuilder
+func NewTransactionBuilder() *TransactionBuilder {
+	return &TransactionBuilder{}
 }
 
-func (t *Transaction) AddEntry(entry *Entry) error {
-	if len(t.Entries) >= 2 {
-		return ErrInvalidMaxEntries
+// WithID sets the transaction ID
+func (b *TransactionBuilder) WithID(id string) *TransactionBuilder {
+	b.eval.CheckField(validator.NotBlank(id), "id", "cannot be blank")
+	b.eval.CheckField(validator.MatchesUUID(id), "id", "is not uuid")
+	b.id = TransactionID(id)
+	return b
+}
+
+// WithIdempotencyKey sets the idempotency key
+func (b *TransactionBuilder) WithIdempotencyKey(key string) *TransactionBuilder {
+	b.eval.CheckField(validator.NotBlank(key), "idempotency_key", "cannot be blank")
+	b.idempotencyKey = key
+	return b
+}
+
+// WithStatus sets the transaction status
+func (b *TransactionBuilder) WithStatus(status string) *TransactionBuilder {
+	s := TransactionStatus(status)
+	b.eval.CheckField(s.IsValid(), "status", "invalid transaction status")
+	b.status = s
+	return b
+}
+
+// WithEntries adds entries to the transaction
+func (b *TransactionBuilder) WithEntries(entries []*Entry) *TransactionBuilder {
+	if len(entries) > 2 {
+		b.eval.CheckField(false, "entries", "maximum entries exceeded")
+		return b
 	}
 
-	if len(t.Entries) == 1 {
-
-		if t.Entries[0].Direction == entry.Direction {
-			return ErrDuplicateEntryDirection
-		}
-
-		if !t.Entries[0].Amount.Equal(entry.Amount) {
-			return ErrInvalidDifferentAmount
-		}
+	if entries[0].Direction == entries[1].Direction {
+		b.eval.CheckField(false, "entries", "duplicate entry direction: entries must have opposite directions (debit and credit)")
+		return b
 	}
 
-	t.Entries = append(t.Entries, entry)
+	if entries[0].Amount != entries[1].Amount {
+		b.eval.CheckField(false, "entries", "different amount")
+		return b
+	}
 
-	return nil
+	b.entries = entries
+	return b
 }
 
 func (t *Transaction) Complete() error {

@@ -1,34 +1,11 @@
 package command
 
 import (
-	"context"
-	"errors"
-
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
-	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/outbox"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/transaction"
 )
-
-var (
-	ErrInsufficientBalance = errors.New("insufficient balance")
-	ErrTransactionExists   = errors.New("transaction already exists")
-	ErrAccountNotFound     = errors.New("account not found")
-	ErrInvalidCurrency     = errors.New("invalid currency")
-)
-
-type CreateTransactionInput struct {
-	IdempotencyKey  string
-	DebitAccountID  account.AccountID
-	CreditAccountID account.AccountID
-	Amount          int64
-	Currency        money.Currency
-}
-
-type CreateTransactionOutput struct {
-	TransactionID transaction.TransactionID
-}
 
 type CreateTransaction struct {
 	uow                   application.UnitOfWork
@@ -53,204 +30,204 @@ func NewCreateTransaction(uow application.UnitOfWork,
 	}
 }
 
-func (c *CreateTransaction) Execute(ctx context.Context, input CreateTransactionInput) (*CreateTransactionOutput, error) {
-	//ctx, span := c.tracer.Start(ctx, "CreateTransaction.Execute")
-	//defer span.End()
-	//
-	//existingTransaction, err := c.transactionRepository.FindByIdempotencyKey(ctx, input.IdempotencyKey)
-	//if err != nil && !errors.Is(err, transaction.ErrTransactionNotFound) {
-	//	span.RecordError(err)
-	//	return nil, err
-	//}
-	//
-	//if existingTransaction != nil {
-	//	return &CreateTransactionOutput{
-	//		TransactionID: existingTransaction.ID,
-	//	}, nil
-	//}
-	//
-	//var output *CreateTransactionOutput
-	//
-	//errUow := c.uow.WithTransaction(ctx, func(ctxTx context.Context) error {
-	//	// 1. Lock determinístico para evitar deadlock
-	//	firstID, secondID := input.DebitAccountID, input.CreditAccountID
-	//	if firstID > secondID {
-	//		firstID, secondID = secondID, firstID
-	//	}
-	//
-	//	// 2. Busca com SELECT FOR UPDATE da TX
-	//	// Aqui garantimos que o saldo lido é a "última verdade" e ninguém mexe até o commit
-	//	_, err := c.accountRepository.FindBalanceForUpdateByID(ctxTx, firstID)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	_, err = c.accountRepository.FindBalanceForUpdateByID(ctxTx, secondID)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	// 3. Busca os objetos completos para lógica de domínio
-	//	debitAccount, err := c.accountRepository.FindByID(ctxTx, input.DebitAccountID)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	creditAccount, err := c.accountRepository.FindByID(ctxTx, input.CreditAccountID)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	if debitAccount == nil {
-	//		span.RecordError(account.ErrAccountNotFound)
-	//		return account.ErrAccountNotFound
-	//	}
-	//
-	//	if creditAccount == nil {
-	//		span.RecordError(account.ErrAccountNotFound)
-	//		return account.ErrAccountNotFound
-	//	}
-	//
-	//	if debitAccount.Balance.Currency() != creditAccount.Balance.Currency() || debitAccount.Balance.Currency() != input.Currency {
-	//		span.RecordError(ErrInvalidCurrency)
-	//		return ErrInvalidCurrency
-	//	}
-	//
-	//	amount, err := money.NewMoney(input.Amount, input.Currency)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	if !debitAccount.Balance.IsSufficientBalance(amount) {
-	//		span.RecordError(ErrInsufficientBalance)
-	//		return ErrInsufficientBalance
-	//	}
-	//
-	//	transactionID := uuid.New().String()
-	//	newTransaction := transaction.NewTransaction(transaction.TransactionID(transactionID), input.IdempotencyKey)
-	//
-	//	debitEntryID := uuid.New().String()
-	//	creditEntryID := uuid.New().String()
-	//
-	//	newDebitEntry, err := transaction.NewEntry(
-	//		transaction.EntryID(debitEntryID),
-	//		input.IdempotencyKey,
-	//		transaction.Debit,
-	//		amount,
-	//		transaction.AccountID(debitAccount.ID),
-	//		transaction.TransactionID(transactionID),
-	//	)
-	//
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	newCreditEntry, err := transaction.NewEntry(
-	//		transaction.EntryID(creditEntryID),
-	//		input.IdempotencyKey,
-	//		transaction.Credit,
-	//		amount,
-	//		transaction.AccountID(creditAccount.ID),
-	//		transaction.TransactionID(transactionID),
-	//	)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	debitAccount.Balance, err = debitAccount.Balance.Subtract(amount)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	creditAccount.Balance, err = creditAccount.Balance.Add(amount)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	err = newTransaction.AddEntry(newDebitEntry)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	err = newTransaction.AddEntry(newCreditEntry)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	err = newTransaction.Complete()
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	err = c.transactionRepository.Save(ctxTx, newTransaction)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	err = c.accountRepository.UpdateBalance(ctxTx, debitAccount.ID, debitAccount.Balance)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	err = c.accountRepository.UpdateBalance(ctxTx, creditAccount.ID, creditAccount.Balance)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	payload, err := json.Marshal(event.TransactionCreated{
-	//		TransactionID:   string(newTransaction.ID),
-	//		IdempotencyKey:  input.IdempotencyKey,
-	//		DebitAccountID:  string(input.DebitAccountID),
-	//		CreditAccountID: string(input.CreditAccountID),
-	//		Amount:          input.Amount,
-	//		Currency:        string(input.Currency),
-	//		Status:          string(newTransaction.Status),
-	//		OccurredAt:      time.Now(),
-	//	})
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	outboxID := uuid.New().String()
-	//	newOutbox := outbox.NewOutbox(outbox.OutboxID(outboxID),
-	//		string(newTransaction.ID),
-	//		outbox.Transaction,
-	//		outbox.TransactionCreated,
-	//		payload,
-	//	)
-	//
-	//	err = c.outboxRepository.Save(ctxTx, newOutbox)
-	//	if err != nil {
-	//		span.RecordError(err)
-	//		return err
-	//	}
-	//
-	//	output = &CreateTransactionOutput{
-	//		TransactionID: newTransaction.ID,
-	//	}
-	//
-	//	return nil
-	//})
-	//
-	//if errUow != nil {
-	//	span.RecordError(errUow)
-	//}
-
-	return nil, nil
-}
+//func (c *CreateTransaction) Execute(ctx context.Context, input dto.CreateTransactionInput) (*dto.CreateTransactionOutput, error) {
+//	ctx, span := c.tracer.Start(ctx, "CreateTransaction.Execute")
+//	defer span.End()
+//
+//	existingTransaction, err := c.transactionRepository.FindByIdempotencyKey(ctx, input.IdempotencyKey)
+//	if err != nil && !errors.Is(err, transaction.ErrTransactionNotFound) {
+//		span.RecordError(err)
+//		return nil, err
+//	}
+//
+//	if existingTransaction != nil {
+//		return &dto.CreateTransactionOutput{
+//			TransactionID: existingTransaction.ID,
+//		}, nil
+//	}
+//
+//	var output *dto.CreateTransactionOutput
+//
+//	errUow := c.uow.WithTransaction(ctx, func(ctxTx context.Context) error {
+//		// 1. Lock determinístico para evitar deadlock
+//		firstID, secondID := input.DebitAccountID, input.CreditAccountID
+//		if firstID > secondID {
+//			firstID, secondID = secondID, firstID
+//		}
+//
+//		// 2. Busca com SELECT FOR UPDATE da TX
+//		// Aqui garantimos que o saldo lido é a "última verdade" e ninguém mexe até o commit
+//		_, err := c.accountRepository.FindBalanceForUpdateByID(ctxTx, firstID)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		_, err = c.accountRepository.FindBalanceForUpdateByID(ctxTx, secondID)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		// 3. Busca os objetos completos para lógica de domínio
+//		debitAccount, err := c.accountRepository.FindByID(ctxTx, input.DebitAccountID)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		creditAccount, err := c.accountRepository.FindByID(ctxTx, input.CreditAccountID)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		if debitAccount == nil {
+//			span.RecordError(account.ErrAccountNotFound)
+//			return account.ErrAccountNotFound
+//		}
+//
+//		if creditAccount == nil {
+//			span.RecordError(account.ErrAccountNotFound)
+//			return account.ErrAccountNotFound
+//		}
+//
+//		if debitAccount.Balance.Currency() != creditAccount.Balance.Currency() || debitAccount.Balance.Currency() != input.Currency {
+//			span.RecordError(ErrInvalidCurrency)
+//			return ErrInvalidCurrency
+//		}
+//
+//		amount, err := money.NewMoney(input.Amount, input.Currency)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		if !debitAccount.Balance.IsSufficientBalance(amount) {
+//			span.RecordError(ErrInsufficientBalance)
+//			return ErrInsufficientBalance
+//		}
+//
+//		transactionID := uuid.New().String()
+//		newTransaction := transaction.NewTransaction(transaction.TransactionID(transactionID), input.IdempotencyKey)
+//
+//		debitEntryID := uuid.New().String()
+//		creditEntryID := uuid.New().String()
+//
+//		newDebitEntry, err := transaction.NewEntry(
+//			transaction.EntryID(debitEntryID),
+//			input.IdempotencyKey,
+//			transaction.Debit,
+//			amount,
+//			transaction.AccountID(debitAccount.ID),
+//			transaction.TransactionID(transactionID),
+//		)
+//
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		newCreditEntry, err := transaction.NewEntry(
+//			transaction.EntryID(creditEntryID),
+//			input.IdempotencyKey,
+//			transaction.Credit,
+//			amount,
+//			transaction.AccountID(creditAccount.ID),
+//			transaction.TransactionID(transactionID),
+//		)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		debitAccount.Balance, err = debitAccount.Balance.Subtract(amount)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		creditAccount.Balance, err = creditAccount.Balance.Add(amount)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		err = newTransaction.AddEntry(newDebitEntry)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		err = newTransaction.AddEntry(newCreditEntry)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		err = newTransaction.Complete()
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		err = c.transactionRepository.Save(ctxTx, newTransaction)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		err = c.accountRepository.UpdateBalance(ctxTx, debitAccount.ID, debitAccount.Balance)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		err = c.accountRepository.UpdateBalance(ctxTx, creditAccount.ID, creditAccount.Balance)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		payload, err := json.Marshal(event.TransactionCreated{
+//			TransactionID:   string(newTransaction.ID),
+//			IdempotencyKey:  input.IdempotencyKey,
+//			DebitAccountID:  string(input.DebitAccountID),
+//			CreditAccountID: string(input.CreditAccountID),
+//			Amount:          input.Amount,
+//			Currency:        string(input.Currency),
+//			Status:          string(newTransaction.Status),
+//			OccurredAt:      time.Now(),
+//		})
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		outboxID := uuid.New().String()
+//		newOutbox := outbox.NewOutbox(outbox.OutboxID(outboxID),
+//			string(newTransaction.ID),
+//			outbox.Transaction,
+//			outbox.TransactionCreated,
+//			payload,
+//		)
+//
+//		err = c.outboxRepository.Save(ctxTx, newOutbox)
+//		if err != nil {
+//			span.RecordError(err)
+//			return err
+//		}
+//
+//		output = &CreateTransactionOutput{
+//			TransactionID: newTransaction.ID,
+//		}
+//
+//		return nil
+//	})
+//
+//	if errUow != nil {
+//		span.RecordError(errUow)
+//	}
+//
+//	return nil, nil
+//}

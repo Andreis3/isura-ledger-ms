@@ -6,6 +6,16 @@ table "entries" {
     null = false
   }
 
+  column "transaction_id" {
+      type = text
+      null = false
+  }
+
+  column "created_at" {
+      type = timestamptz
+      null = false
+  }
+
   column "idempotency_key" {
     type = varchar(50)
     null = false
@@ -28,16 +38,6 @@ table "entries" {
 
   column "account_id" {
     type = text
-    null = false
-  }
-
-  column "transaction_id" {
-    type = text
-    null = false
-  }
-
-  column "created_at" {
-    type = timestamptz
     null = false
   }
 

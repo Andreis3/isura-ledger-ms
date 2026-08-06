@@ -8,7 +8,7 @@ import (
 func main() {
 	deps := dependency.BuildBaseDeps()
 	grpcSrv := server.NewGRPCServer(deps)
-	httpSrv := server.NewHTTPServer(*deps)
+	httpSrv := server.NewHTTPServer(deps)
 
-	server.StartServersWithGracefulShutdown(grpcSrv, httpSrv, *deps)
+	server.StartServersWithGracefulShutdown(grpcSrv, httpSrv, deps)
 }

@@ -21,6 +21,11 @@ table "accounts" {
     null = false
   }
 
+  column "type" {
+      type   = varchar(14)
+      null   = false
+    }
+
   column "currency" {
     type = varchar(5)
     null = false
@@ -40,8 +45,21 @@ table "accounts" {
     columns = [column.id]
   }
 
-  index "idx_account_external_currency" {
-    columns = [column.account_external_id, column.currency]
-    unique  = true
-  }
+  index "idx_account_number_currency" {
+      columns = [column.account_number, column.currency]
+      unique  = true
+    }
+
+    index "idx_account_external_currency" {
+      columns = [column.account_external_id, column.currency]
+      unique  = true
+    }
+
+    index "idx_tax_id" {
+      columns = [column.tax_id]
+    }
+
+    index "idx_account_type" {
+      columns = [column.type]
+    }
 }
