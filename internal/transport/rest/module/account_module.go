@@ -32,7 +32,7 @@ func (m *AccountModule) Routes() types.RouteType {
 				factory.NewCreateAccountFactory(m.baseDeps).Handle(w, r)
 			},
 			Type: util.HandlerFunc,
-			Middlewares: types.Middlewares{
+			Middlewares: &types.Middlewares{
 				middleware.Tracing(m.baseDeps.Tracer),
 				middleware.Logging(m.baseDeps.Log.SlogJSON()),
 				middleware.MetricsMiddleware(m.baseDeps.Prom),

@@ -28,6 +28,14 @@ func FindAccountNotFoundError(err error) *DomainError {
 	}
 }
 
+func SaveAccountAlreadyExistsError(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeAlreadyExists,
+		FriendlyMessage: "Account already exists.",
+		Cause:           err,
+	}
+}
+
 /***************Domain Errors****************/
 func InvalidEntityError(err error, fields map[string]any) *DomainError {
 	return &DomainError{

@@ -8,6 +8,10 @@ SCHEMA_DIR = db
 run-app:
 	@echo "Running app"
 	@go run cmd/server/main.go
+run-race:
+	@echo "Running race active"
+	go run -race cmd/server/main.go
+
 
 run-app-logs:
 	@echo "Running app export archive logs"
@@ -84,4 +88,5 @@ migrate:
 		proto-lint,
 		proto-gen,
 		migrate,
-		air
+		air,
+		run-race

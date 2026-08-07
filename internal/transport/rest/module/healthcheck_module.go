@@ -28,7 +28,7 @@ func (r *HealthCheck) Routes() types.RouteType {
 			Path:        "/health",
 			Handler:     handler.HealthCheck(r.pg, r.serviceName),
 			Type:        util.Handler,
-			Middlewares: types.Middlewares{},
+			Middlewares: nil,
 		},
 	}
 }

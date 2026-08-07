@@ -2,7 +2,7 @@ package shared
 
 import "time"
 
-// CoalesceTime retorna t se não for zero, caso contrário fallback
+// CoalesceTime returns t if it is not zero, otherwise fallback
 func CoalesceTime(t, fallback time.Time) time.Time {
 	if t.IsZero() {
 		return fallback

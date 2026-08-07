@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// MaskSlogValue recebe qualquer struct e retorna um slog.GroupValue
-// com os campos mapeados a partir da tag json e mascarados conforme a tag sensitive.
+// MaskSlogValue receives any struct and returns a slog.GroupValue
+// with the fields mapped from the json tag and masked according to the sensitive tag.
 func MaskSlogValue[T any](input T) slog.Value {
 	v := reflect.ValueOf(input)
 	if v.Kind() == reflect.Ptr {
@@ -24,14 +24,14 @@ func MaskSlogValue[T any](input T) slog.Value {
 		field := v.Field(i)
 		fieldType := t.Field(i)
 
-		// Nome da chave: usa a tag json, ou o nome do campo se não houver
+		// Key name: uses the json tag, or the field name if there is none
 		jsonTag := fieldType.Tag.Get("json")
 		key := strings.Split(jsonTag, ",")[0]
 		if key == "" || key == "-" {
 			key = fieldType.Name
 		}
 
-		// Verifica a tag sensitive
+		// Checks the sensitive tag
 		sensitiveTag := fieldType.Tag.Get("sensitive")
 		var value slog.Value
 		if sensitiveTag == "true" {

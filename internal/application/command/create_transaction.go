@@ -49,14 +49,14 @@ func NewCreateTransaction(uow application.UnitOfWork,
 //	var output *dto.CreateTransactionOutput
 //
 //	errUow := c.uow.WithTransaction(ctx, func(ctxTx context.Context) error {
-//		// 1. Lock determinístico para evitar deadlock
+//		// 1. Deterministic lock to avoid deadlock
 //		firstID, secondID := input.DebitAccountID, input.CreditAccountID
 //		if firstID > secondID {
 //			firstID, secondID = secondID, firstID
 //		}
 //
-//		// 2. Busca com SELECT FOR UPDATE da TX
-//		// Aqui garantimos que o saldo lido é a "última verdade" e ninguém mexe até o commit
+//		// 2. Search with SELECT FOR UPDATE from TX
+//		// Here we guarantee that the balance read is the "last truth" and no one touches it until the commit
 //		_, err := c.accountRepository.FindBalanceForUpdateByID(ctxTx, firstID)
 //		if err != nil {
 //			span.RecordError(err)
@@ -69,7 +69,7 @@ func NewCreateTransaction(uow application.UnitOfWork,
 //			return err
 //		}
 //
-//		// 3. Busca os objetos completos para lógica de domínio
+//		// 3. Search for the complete objects for domain logic
 //		debitAccount, err := c.accountRepository.FindByID(ctxTx, input.DebitAccountID)
 //		if err != nil {
 //			span.RecordError(err)

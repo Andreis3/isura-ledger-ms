@@ -9,28 +9,28 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// LevelCritical Níveis customizados
+// LevelCritical Custom levels
 const LevelCritical = slog.LevelError + 1
 
 const (
 	timeFormat = "01-02-2006 15:04:05.000"
 )
 
-// Logger encapsula os handlers para diferentes ambientes.
+// Logger encapsulates handlers for different environments.
 type Logger struct {
 	json *slog.Logger
 	text *slog.Logger
 }
 
-// NewLogger constrói os handlers e define o padrão global.
+// NewLogger builds the handlers and sets the global default.
 func NewLogger() *Logger {
-	// Opções para JSON (Produção)
+	// Options for JSON (Production)
 	jsonOpts := &slog.HandlerOptions{
 		Level:       slog.LevelDebug,
 		ReplaceAttr: replaceAttrJSON,
 	}
 
-	// Opções para Texto (Desenvolvimento)
+	// Options for Text (Development)
 	textOpts := &tint.Options{
 		Level:      slog.LevelDebug,
 		TimeFormat: timeFormat,
@@ -42,7 +42,7 @@ func NewLogger() *Logger {
 		text: slog.New(tint.NewHandler(os.Stderr, textOpts)),
 	}
 
-	// Define o default do sistema baseado no ambiente
+	// Sets the system default based on the environment
 	if os.Getenv("ENV") == "development" {
 		slog.SetDefault(l.text)
 	} else {
@@ -52,7 +52,7 @@ func NewLogger() *Logger {
 	return l
 }
 
-// ── Métodos JSON (Produção / Loki) ───────────────────────────────────────────
+// ── JSON Methods (Production / Loki) ───────────────────────────────────────────
 
 func (l *Logger) DebugJSON(msg string, args ...any) { l.json.Debug(msg, args...) }
 func (l *Logger) InfoJSON(msg string, args ...any)  { l.json.Info(msg, args...) }
@@ -62,7 +62,7 @@ func (l *Logger) CriticalJSON(msg string, args ...any) {
 	l.json.Log(context.Background(), LevelCritical, msg, args...)
 }
 
-// ── Métodos Text (Desenvolvimento / Terminal) ────────────────────────────────
+// ── Text Methods (Development / Terminal) ────────────────────────────────
 
 func (l *Logger) DebugText(msg string, args ...any) { l.text.Debug(msg, args...) }
 func (l *Logger) InfoText(msg string, args ...any)  { l.text.Info(msg, args...) }
@@ -72,9 +72,9 @@ func (l *Logger) CriticalText(msg string, args ...any) {
 	l.text.Log(context.Background(), LevelCritical, msg, args...)
 }
 
-// ── Observabilidade ───────────────────────────────────────────────────────────
+// ── Observability ───────────────────────────────────────────────────────────
 
-// WithTrace retorna o logger JSON enriquecido com dados do OpenTelemetry.
+// WithTrace returns the JSON logger enriched with OpenTelemetry data.
 func (l *Logger) WithTrace(ctx context.Context) *slog.Logger {
 	span := trace.SpanContextFromContext(ctx)
 	if !span.IsValid() || !span.HasTraceID() {
@@ -86,12 +86,12 @@ func (l *Logger) WithTrace(ctx context.Context) *slog.Logger {
 	)
 }
 
-// ── Helpers e Atributos ───────────────────────────────────────────────────────
+// ── Helpers and Attributes ───────────────────────────────────────────────────────
 
 func replaceAttrJSON(_ []string, a slog.Attr) slog.Attr {
 	switch a.Key {
 	case slog.TimeKey:
-		// Otimização: usa o tempo que o slog já fornece
+		// Optimization: uses the time that slog already provides
 		a.Value = slog.StringValue(a.Value.Time().Format(timeFormat))
 	case slog.LevelKey:
 		a.Value = slog.StringValue(levelLabel(a))
@@ -120,6 +120,6 @@ func levelLabel(a slog.Attr) string {
 	}
 }
 
-// SlogJSON e SlogText permitem acesso direto caso necessário
+// SlogJSON and SlogText allow direct access if necessary
 func (l *Logger) SlogJSON() *slog.Logger { return l.json }
 func (l *Logger) SlogText() *slog.Logger { return l.text }

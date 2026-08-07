@@ -76,8 +76,8 @@ func LoadConfig() *Configs {
 	return &configs
 }
 
-// bindEnvs mapeia variáveis de ambiente para as chaves do config.json.
-// Env vars têm precedência sobre o arquivo de configuração.
+// bindEnvs maps environment variables to the keys in config.json.
+// Env vars take precedence over the configuration file.
 func bindEnvs() {
 	_ = viper.BindEnv("env", "APP_ENV")
 	_ = viper.BindEnv("application_name", "APPLICATION_NAME")

@@ -27,4 +27,5 @@ var TranslatorStatusCode = map[fault.Code]ProtocolError{
 	fault.CodeInvalidTransfer:      {HTTPStatus: http.StatusBadRequest},
 	fault.CodeInsufficientBalance:  {HTTPStatus: http.StatusBadRequest},
 	fault.CodeDuplicateTransaction: {HTTPStatus: http.StatusBadRequest},
+	fault.CodeAlreadyExists:        {HTTPStatus: http.StatusConflict},
 }

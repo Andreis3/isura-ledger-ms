@@ -10,6 +10,7 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/model"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type AccountRepository struct {
@@ -30,11 +31,12 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
               account_external_id,
               account_number,
               tax_id,
+              status,
               type,
               currency,
               created_at,
               updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	accountModel := model.ToAccountModel(account)
 
@@ -43,6 +45,7 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
 		accountModel.AccountExternalID,
 		accountModel.AccountNumber,
 		accountModel.TaxID,
+		accountModel.Status,
 		accountModel.Type,
 		accountModel.Currency,
 		accountModel.CreatedAt,
@@ -50,6 +53,9 @@ func (r *AccountRepository) Save(ctx context.Context, account *account.Account) 
 	)
 
 	if err != nil {
+		if isUniqueViolation(err) {
+			return fault.SaveAccountAlreadyExistsError(err)
+		}
 		return fault.SaveAccountError(err)
 	}
 
@@ -65,6 +71,7 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
             account_external_id, 
             account_number, 
             tax_id,
+            status,
             type,
             currency, 
             created_at, 
@@ -79,6 +86,7 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
 		&accountModel.AccountExternalID,
 		&accountModel.AccountNumber,
 		&accountModel.TaxID,
+		&accountModel.Status,
 		&accountModel.Type,
 		&accountModel.Currency,
 		&accountModel.CreatedAt,
@@ -98,4 +106,12 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
 	}
 
 	return accDomain, nil
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
+	}
+	return false
 }

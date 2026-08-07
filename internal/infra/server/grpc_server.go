@@ -34,7 +34,7 @@ func NewGRPCServer(
 func (s *GRPCServer) Start() error {
 	start := time.Now()
 
-	// GRPC server com interceptors
+	// GRPC server with interceptors
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			interceptor.LoggingInterceptor(s.deps.Log.SlogJSON()),
@@ -43,7 +43,7 @@ func (s *GRPCServer) Start() error {
 		),
 	)
 
-	// registra todos os módulos
+	// registers all modules
 	registry := grpcTransport.NewServerRegistry(grpcServer, grpcTransport.NewLedgerModule(s.buildLedgerServer()))
 	registry.RegisterAll()
 	reflection.Register(grpcServer)

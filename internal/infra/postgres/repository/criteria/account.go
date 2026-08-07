@@ -9,6 +9,7 @@ type AccountCriteria struct {
 	TaxID             *string
 	AccountNumber     *string
 	Currency          *string
+	Type              *string
 }
 
 func GetCriteria(query string, params AccountCriteria) (string, []any) {
@@ -36,6 +37,12 @@ func GetCriteria(query string, params AccountCriteria) (string, []any) {
 	if params.Currency != nil {
 		query += fmt.Sprintf(" AND currency = $%d", argCount)
 		args = append(args, *params.Currency)
+		argCount++
+	}
+
+	if params.Type != nil {
+		query += fmt.Sprintf(" AND type = $%d", argCount)
+		args = append(args, *params.Type)
 		argCount++
 	}
 

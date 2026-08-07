@@ -21,6 +21,11 @@ table "accounts" {
     null = false
   }
 
+  column "status" {
+      type    = varchar(20)
+      null    = false
+  }
+
   column "type" {
       type   = varchar(14)
       null   = false

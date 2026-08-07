@@ -43,10 +43,10 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 	defer span.End()
 	defer c.metrics.RecordCommandDuration("CreateAccount", float64(time.Since(start).Milliseconds()))
 
-	c.log.InfoJSON("CreateAccount received request",
-		slog.String("trace_id", tracerID),
-		slog.Any("input", MaskSlogValue[dto.CreateAccountInput](input)),
-	)
+	//c.log.InfoJSON("CreateAccount received request",
+	//	slog.String("trace_id", tracerID),
+	//	slog.Any("input", MaskSlogValue[dto.CreateAccountInput](input)),
+	//)
 
 	accountEntity, err := c.validate(input)
 	if err != nil {
@@ -63,6 +63,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 	parmsCriteria := criteria.AccountCriteria{
 		AccountExternalID: &accountEntity.AccountExternalID,
 		Currency:          new(string(accountEntity.Currency)),
+		Type:              new(string(accountEntity.AccountType)),
 	}
 
 	existing, err := c.accountRepository.FindAccount(ctx, parmsCriteria)
@@ -88,13 +89,11 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 		}, nil
 	}
 
-	accountID := account.AccountID(uuid.New().String())
-
 	if err != nil {
 		c.log.CriticalJSON("CreateAccount failed to create account entity",
 			append([]any{
 				slog.String("trace_id", tracerID),
-				slog.String("account_external_id", accountEntity.AccountExternalID)},
+				slog.String("account_external_id", input.AccountExternalID)},
 				fault.Attrs(err)...)...,
 		)
 		c.metrics.RecordCommandTotal("CreateAccount", "failure")
@@ -113,29 +112,19 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 		return nil, err
 	}
 
-	c.log.InfoJSON("CreateAccount account created successfully",
-		slog.String("trace_id", tracerID),
-		slog.String("account_id", string(accountID)),
-		slog.String("account_external_id", accountEntity.AccountExternalID),
-	)
+	//c.log.InfoJSON("CreateAccount account created successfully",
+	//	slog.String("trace_id", tracerID),
+	//	slog.String("account_id", string(accountEntity.ID)),
+	//	slog.String("account_external_id", accountEntity.AccountExternalID),
+	//)
 
 	return &dto.CreateAccountOutput{
-		AccountID: new(string(accountID)),
+		AccountID: new(string(accountEntity.ID)),
 	}, nil
 }
 
 func (c *CreateAccount) validate(input dto.CreateAccountInput) (*account.Account, error) {
 	id := uuid.New().String()
-	now := time.Now()
 
-	return account.NewAccountBuilder().
-		WithID(id).
-		WithAccountExternalID(input.AccountExternalID).
-		WithAccountNumber(input.AccountNumber).
-		WithTaxID(input.TaxID).
-		WithType(input.AccountType).
-		WithCurrency(input.Currency).
-		WithCreatedAt(now).
-		WithUpdatedAt(now).
-		Build()
+	return input.CreateAccountFacade(id)
 }

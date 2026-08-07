@@ -22,7 +22,7 @@ func (m *Metrics) Routes() types.RouteType {
 			Path:        "/metrics",
 			Handler:     promhttp.Handler(),
 			Type:        util.Handler,
-			Middlewares: types.Middlewares{},
+			Middlewares: nil,
 		},
 	}
 }

@@ -4,4 +4,5 @@ package util
 const (
 	Handler     = "handler"
 	HandlerFunc = "handlerFunc"
+	Mount       = "mount"
 )

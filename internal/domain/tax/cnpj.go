@@ -25,7 +25,7 @@ type CNPJ struct {
 	value string
 }
 
-// NewCNPJ tenta criar o Value Object já validando através do seu Evaluator
+// NewCNPJ tries to create the Value Object, validating it through its Evaluator.
 func NewCNPJ(rawCNPJ string) (*CNPJ, validator.Evaluator) {
 	var eval validator.Evaluator
 

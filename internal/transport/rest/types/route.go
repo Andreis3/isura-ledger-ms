@@ -11,7 +11,7 @@ type RouteFields struct {
 	Path    string
 	Handler any
 	Type    string
-	Middlewares
+	*Middlewares
 }
 
 // Helper function to add a prefix to all routes

@@ -56,8 +56,8 @@ func (r *RegisterRoutes) attachRoute(route types.RouteFields) {
 
 	// If middlewares exist, we apply them via .With(...)
 	// and register within a .Group
-	if len(route.Middlewares) > 0 {
-		r.mux.With(route.Middlewares...).Group(func(m chi.Router) {
+	if route.Middlewares != nil && len(*route.Middlewares) > 0 {
+		r.mux.With(*route.Middlewares...).Group(func(m chi.Router) {
 			r.registerHandler(m, route)
 		})
 	} else {
@@ -75,5 +75,7 @@ func (r *RegisterRoutes) registerHandler(m chi.Router, route types.RouteFields) 
 
 	case util.HandlerFunc:
 		m.MethodFunc(route.Method, route.Path, route.Handler.(func(http.ResponseWriter, *http.Request)))
+	case util.Mount:
+		m.Mount(route.Path, route.Handler.(http.Handler))
 	}
 }

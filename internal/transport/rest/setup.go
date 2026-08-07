@@ -22,8 +22,9 @@ func Setup(st *SetupDeps) {
 
 func BuildRoutes(st *SetupDeps) []ModuleRoutes {
 	return []ModuleRoutes{
-		module.NewHealthCheck(st.Deps.Pg, st.Deps.Cfg.ApplicationName),
 		module.NewMetrics(),
+		module.NewPPROF(),
+		module.NewHealthCheck(st.Deps.Pg, st.Deps.Cfg.ApplicationName),
 		module.NewAccountModule(*st.Deps),
 	}
 }

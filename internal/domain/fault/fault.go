@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// Code representa a classificação semântica do erro no domínio.
-// Usar string permite serialização direta em logs e respostas JSON.
+// Code represents the semantic classification of the error in the domain.
+// Using a string allows direct serialization in logs and JSON responses.
 type Code string
 
 const (
@@ -19,33 +19,33 @@ const (
 	CodeConflict            Code = "ERR_409"
 	CodeUnprocessableEntity Code = "ERR_422"
 
-	// ─── Erros de Cliente (ILMS-1xxx) ─────────────────────────
-	CodeInvalidEntity        Code = "ILMS-1001" // Entidade inválida (validação)
-	CodeNotFound             Code = "ILMS-1002" // Recurso não encontrado
-	CodeAlreadyExists        Code = "ILMS-1003" // Recurso já existe
-	CodeInsufficientBalance  Code = "ILMS-1004" // Saldo insuficiente
-	CodeDuplicateTransaction Code = "ILMS-1005" // Transação duplicada
-	CodeInvalidTransfer      Code = "ILMS-1006" // Transferência inválida
+	// --- Client Errors (ILMS-1xxx) ─────────────────────────
+	CodeInvalidEntity        Code = "ILMS-1001" // Invalid entity (validation)
+	CodeNotFound             Code = "ILMS-1002" // Resource not found
+	CodeAlreadyExists        Code = "ILMS-1003" // Resource already exists
+	CodeInsufficientBalance  Code = "ILMS-1004" // Insufficient balance
+	CodeDuplicateTransaction Code = "ILMS-1005" // Duplicate transaction
+	CodeInvalidTransfer      Code = "ILMS-1006" // Invalid transfer
 
-	// ─── Erros de Servidor (ILMS-2xxx) ─────────────────────────
-	CodeDatabaseError   Code = "ILMS-2001" // Erro no banco de dados
-	CodeCacheError      Code = "ILMS-2002" // Erro no cache
-	CodeExternalService Code = "ILMS-2003" // Erro em serviço externo
+	// --- Server Errors (ILMS-2xxx) ─────────────────────────
+	CodeDatabaseError   Code = "ILMS-2001" // Database error
+	CodeCacheError      Code = "ILMS-2002" // Cache error
+	CodeExternalService Code = "ILMS-2003" // External service error
 	CodeTimeoutError    Code = "ILMS-2004" // Timeout
 
-	// ─── Erros Genéricos (ILMS-9xxx) ──────────────────────────
-	CodeInternal Code = "ILMS-9001" // Erro interno
-	CodeUnknown  Code = "ILMS-9999" // Erro desconhecido
+	// --- Generic Errors (ILMS-9xxx) ──────────────────────────
+	CodeInternal Code = "ILMS-9001" // Internal error
+	CodeUnknown  Code = "ILMS-9999" // Unknown error
 )
 
-// DomainError é o erro rico do domínio.
-// Implementa a interface error e é compatível com errors.Is / errors.As / errors.Unwrap.
+// DomainError is the rich domain error.
+// It implements the error interface and is compatible with errors.Is / errors.As / errors.Unwrap.
 type DomainError struct {
-	Code            Code           // Classificação semântica
-	FriendlyMessage string         // Mensagem segura para expor ao client
-	Fields          map[string]any // Erros por campo (ex: validação de formulário)
-	Origin          string         // Função de origem, preenchida automaticamente
-	Cause           error          // erro original preservado (permite wrapping)
+	Code            Code           // Semantic classification
+	FriendlyMessage string         // Safe message to expose to the client
+	Fields          map[string]any // Errors by field (e.g., form validation)
+	Origin          string         // Origin function, filled automatically
+	Cause           error          // Original error preserved (allows wrapping)
 }
 
 type ValidationError struct {
@@ -66,8 +66,8 @@ func (e *ValidationError) Error() string {
 	return fmt.Sprintf("validation failed with %d error(s)", len(e.Errors))
 }
 
-// Error implementa a interface error.
-// Retorna informação técnica completa — use apenas em logs internos.
+// Error implements the error interface.
+// Returns complete technical information — use only in internal logs.
 func (e *DomainError) Error() string {
 	var sb strings.Builder
 
@@ -93,12 +93,12 @@ func (e *DomainError) Error() string {
 	return sb.String()
 }
 
-// Is permite comparar DomainError por Code usando errors.Is.
+// Is allows comparing DomainError by Code using errors.Is.
 //
-// Exemplo:
+// Example:
 //
 //	var ErrNotFound = &DomainError{Code: CodeNotFound}
-//	errors.Is(err, ErrNotFound) // true se ambos tiverem CodeNotFound
+//	errors.Is(err, ErrNotFound) // true if both have CodeNotFound
 func (e *DomainError) Is(target error) bool {
 	if t, ok := errors.AsType[*DomainError](target); ok {
 		return e.Code == t.Code
@@ -106,13 +106,13 @@ func (e *DomainError) Is(target error) bool {
 	return false
 }
 
-// Unwrap implementa a interface errors.Unwrap
+// Unwrap implements the errors.Unwrap interface.
 func (e *DomainError) Unwrap() error {
 	return e.Cause
 }
 
-// New cria um DomainError.
-// origin é preenchido automaticamente com o nome da função chamadora.
+// New creates a DomainError.
+// origin is automatically filled with the name of the calling function.
 func New(code Code, friendly string, cause error) *DomainError {
 	return &DomainError{
 		Code:            code,
@@ -122,8 +122,8 @@ func New(code Code, friendly string, cause error) *DomainError {
 	}
 }
 
-// NewWithFields cria um DomainError com mapa de erros por campo.
-// Útil para erros de validação onde cada campo tem sua mensagem.
+// NewWithFields creates a DomainError with a map of errors by field.
+// Useful for validation errors where each field has its own message.
 func NewWithFields(code Code, friendly string, fields map[string]any) *DomainError {
 	return &DomainError{
 		Code:            code,
@@ -134,8 +134,8 @@ func NewWithFields(code Code, friendly string, fields map[string]any) *DomainErr
 	}
 }
 
-// Wrap envolve um erro existente num DomainError, preservando a causa original.
-// Equivalente semântico ao fmt.Errorf("op: %w", err) mas com metadados ricos.
+// Wrap wraps an existing error in a DomainError, preserving the original cause.
+// Semantically equivalent to fmt.Errorf("op: %w", err) but with rich metadata.
 func Wrap(code Code, friendly string, cause error) *DomainError {
 	return &DomainError{
 		Code:            code,
@@ -161,7 +161,7 @@ func CallerName(skip int) string {
 		full = full[idx+1:]
 	}
 
-	// pega só o nome do arquivo sem o path completo
+	// gets only the file name without the full path
 	if idx := strings.LastIndex(file, "/"); idx >= 0 {
 		file = file[idx+1:]
 	}
@@ -169,8 +169,8 @@ func CallerName(skip int) string {
 	return fmt.Sprintf("%s (%s:%d)", full, file, line)
 }
 
-// Attrs retorna os atributos slog do DomainError para uso em logs.
-// Se err não for DomainError, retorna só o erro como string.
+// Attrs returns the slog attributes of the DomainError for use in logs.
+// If err is not a DomainError, it returns only the error as a string.
 func Attrs(err error) []any {
 	if de, ok := errors.AsType[*DomainError](err); ok {
 		var attrs []any

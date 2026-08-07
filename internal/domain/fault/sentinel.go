@@ -1,18 +1,18 @@
 package fault
 
-// Erros sentinela por domínio.
+// Sentinel errors by domain.
 //
-// Erros sentinela são variáveis globais que representam condições de erro
-// conhecidas. Permitem comparação com errors.Is sem depender de strings.
+// Sentinel errors are global variables that represent known error conditions.
+// They allow comparison with errors.Is without depending on strings.
 //
-// Convenção:
-//   - Prefixo "Err" para erros de negócio (esperados)
-//   - Sem prefixo para erros de infraestrutura (wrappados com Wrap())
+// Convention:
+//   - "Err" prefix for business errors (expected)
+//   - No prefix for infrastructure errors (wrapped with Wrap())
 //
-// Uso:
+// Usage:
 //
 //   if errors.Is(err, ErrCustomerNotFound) {
-//       // tratar 404
+//       // handle 404
 //   }
 
 /* --- Account --- */

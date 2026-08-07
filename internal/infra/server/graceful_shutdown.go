@@ -18,9 +18,9 @@ func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, 
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	// Goroutine para o servidor HTTP
+	// Goroutine for the HTTP server
 	g.Go(func() error {
-		// Inicia o servidor em uma goroutine separada
+		// Starts the server in a separate goroutine
 		errCh := make(chan error, 1)
 		go func() {
 			deps.Log.InfoText("Starting HTTP server...")
@@ -30,19 +30,19 @@ func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, 
 			close(errCh)
 		}()
 
-		// Aguarda o contexto ser cancelado ou erro no servidor
+		// Waits for the context to be canceled or an error on the server
 		select {
 		case <-ctx.Done():
 			deps.Log.InfoText("Shutting down HTTP server...")
 			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			return httpSrv.Shutdown(shutdownCtx) // Isso para o servidor
+			return httpSrv.Shutdown(shutdownCtx) // This stops the server
 		case err := <-errCh:
 			return err
 		}
 	})
 
-	// Goroutine para o servidor gRPC
+	// Goroutine for the gRPC server
 	g.Go(func() error {
 		errCh := make(chan error, 1)
 		go func() {
@@ -63,12 +63,12 @@ func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, 
 		}
 	})
 
-	// Aguarda todos terminarem
+	// Waits for all to finish
 	if err := g.Wait(); err != nil {
 		deps.Log.InfoText("Servers stopped with error: %v", err)
 	}
 
-	// Fecha infraestrutura
+	// Closes infrastructure
 	deps.Log.InfoText("Closing infrastructure...")
 	closeCtx, closeCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer closeCancel()
