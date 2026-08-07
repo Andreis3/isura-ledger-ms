@@ -4,8 +4,6 @@ DOCKER_COMPOSE = docker compose
 SERVICE_NAME = ledger
 DB_URL  = postgres://admin:admin@localhost:5432/isura_ledger_main?sslmode=disable
 SCHEMA_DIR = db
-
-# Configurações padrão
 URL ?= http://localhost:8080/accounts
 DURATION ?= 60s
 
