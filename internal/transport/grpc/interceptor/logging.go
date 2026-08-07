@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// LoggingInterceptor é um interceptor unário que loga cada request gRPC.
-// Deve ser registrado no grpc.NewServer via grpc.UnaryInterceptor.
+// LoggingInterceptor is a unary interceptor that logs each gRPC request.
+// It must be registered in grpc.NewServer via grpc.UnaryInterceptor.
 func LoggingInterceptor(log *slog.Logger) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -21,7 +21,7 @@ func LoggingInterceptor(log *slog.Logger) grpc.UnaryServerInterceptor {
 	) (any, error) {
 		start := time.Now()
 
-		// chama o handler real
+		// calls the real handler
 
 		resp, err := handler(ctx, req)
 
@@ -34,8 +34,8 @@ func LoggingInterceptor(log *slog.Logger) grpc.UnaryServerInterceptor {
 			slog.String("duration", duration.String()),
 		}
 
-		// codes que são erros de cliente — loga como WARN
-		// codes que são erros de servidor — loga como ERROR
+		// codes that are client errors — logs as WARN
+		// codes that are server errors — logs as ERROR
 		switch code {
 		case codes.Internal, codes.Unavailable, codes.DataLoss, codes.Unknown:
 			log.ErrorContext(ctx, "gRPC request failed", attrs...)

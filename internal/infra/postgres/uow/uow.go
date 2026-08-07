@@ -31,7 +31,7 @@ func (u *UnitOfWork) WithTransaction(ctx context.Context, fn func(ctx context.Co
 	}
 
 	if err := fn(database.WithTx(ctx, tx)); err != nil {
-		// Cria um contexto seguro para o rollback caso o ctx original tenha expirado/cancelado
+		// Creates a safe context for the rollback in case the original ctx has expired/canceled
 		rbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 

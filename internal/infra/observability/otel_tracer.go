@@ -37,7 +37,7 @@ func (s *otelSpan) RecordError(err error) {
 }
 
 func (s *otelSpan) SpanContext() application.SpanContext {
-	return &otelSpanContext{s.Span.SpanContext()} // ✅ chama o SpanContext do campo do OTEL
+	return &otelSpanContext{s.Span.SpanContext()} // ✅ calls the SpanContext of the OTEL field
 }
 
 type otelSpanContext struct {
@@ -48,7 +48,7 @@ func (sc *otelSpanContext) TraceID() string {
 	return sc.SpanContext.TraceID().String()
 }
 
-// InitOtelTracer ✅ Esta função inicializa o OpenTelemetry por completo e retorna o adapter. Tracer
+// InitOtelTracer ✅ This function initializes OpenTelemetry completely and returns the Tracer adapter.
 func InitOtelTracer(ctx context.Context, cfg *configs.Configs) (application.Tracer, func(context.Context) error, error) {
 	exporter, err := otlptracehttp.New(
 		ctx,
@@ -87,6 +87,6 @@ func InitOtelTracer(ctx context.Context, cfg *configs.Configs) (application.Trac
 
 	otel.SetTracerProvider(provider)
 
-	// Retorna o adapter.Tracer e a função de shutdown
+	// Returns the Tracer adapter and the shutdown function
 	return &otelTracer{tracer: provider.Tracer(cfg.ApplicationName)}, provider.Shutdown, nil
 }

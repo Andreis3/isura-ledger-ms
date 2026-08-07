@@ -6,7 +6,7 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 )
 
-// responseWriterWrapper intercepta o status HTTP para podermos registrar no span se necessário
+// responseWriterWrapper intercepts the HTTP status so we can record it in the span if necessary.
 type responseWriterWrapper struct {
 	http.ResponseWriter
 	statusCode int
@@ -20,23 +20,23 @@ func (r *responseWriterWrapper) WriteHeader(statusCode int) {
 func Tracing(tracer application.Tracer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Usa o camimnho  da URL (ex: /accounts) como nome do span
+			// Uses the URL path (e.g., /accounts) as the span name.
 			spanName := r.Method + " " + r.URL.Path
 			ctx, span := tracer.Start(r.Context(), spanName)
 			defer span.End()
 
-			// Injeta o contexto atualizado com span na requisição
+			// Injects the updated context with the span into the request.
 			r = r.WithContext(ctx)
 
-			// Wrapper para capturar o status code da resposta
+			// Wrapper to capture the response status code.
 			ww := &responseWriterWrapper{w, http.StatusOK}
 
-			// Executa o próximo handler
+			// Executes the next handler.
 			next.ServeHTTP(ww, r)
 
-			// Se o status for de erro (>= 500), podemos registrar como erro no span
+			// If the status is an error (>= 500), we can record it as an error in the span.
 			if ww.statusCode >= http.StatusInternalServerError {
-				span.RecordError(http.ErrAbortHandler) // Ou pode registrar uma mensagem/erro customizado
+				span.RecordError(http.ErrAbortHandler) // Or you can record a custom message/error.
 			}
 		})
 	}
