@@ -33,6 +33,7 @@ func SaveAccountAlreadyExistsError(err error) *DomainError {
 		Code:            CodeAlreadyExists,
 		FriendlyMessage: "Account already exists.",
 		Cause:           err,
+		Origin:          CallerName(2),
 	}
 }
 

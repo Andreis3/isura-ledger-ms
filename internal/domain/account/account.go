@@ -110,7 +110,7 @@ func (b *AccountBuilder) WithAccountNumber(number string) *AccountBuilder {
 
 // WithTaxID defines CNPJ (required).
 func (b *AccountBuilder) WithTaxID(rawTaxID string) *AccountBuilder {
-	cnpjObj, eval := tax.NewCNPJ(rawTaxID)
+	cnpjObj, eval := tax.NewCNPJOrCPF(rawTaxID)
 	if len(eval) > 0 {
 		// Merges CNPJ errors into the Builder's evaluator.
 		for field, msg := range eval {

@@ -1,0 +1,279 @@
+openapi: 3.0.3
+info:
+  title: Isura Ledger Microservice API
+  description: |
+    Documentação robusta da API REST para o microsserviço de Ledger (`isura-ledger-ms`) do ecossistema Isura Bank. 
+    Este serviço é o core da contabilidade de partidas dobradas (double-entry accounting), garantindo a consistência, atomicidade e idempotência das transações financeiras.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Ambiente de Desenvolvimento Local
+tags:
+  - name: Accounts
+    description: Gerenciamento de contas contábeis do ledger
+  - name: Transactions
+    description: Lançamentos contábeis com suporte a partidas dobradas
+  - name: Observability
+    description: Endpoints de infraestrutura e healthcheck
+paths:
+  /accounts:
+    post:
+      summary: Cria uma nova conta no Ledger
+      description: Registra uma nova conta contábil vinculada a um documento (CNPJ/CPF) para posterior registro de entradas (entries).
+      operationId: createAccount
+      tags:
+        - Accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '201':
+          description: Conta criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          description: Erro de validação de domínio (ex. CNPJ inválido)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validationError:
+                  value:
+                    code_error: "ILMS-1001"
+                    error_fields:
+                      account_external_id: "cannot be blank"
+                      account_number: "is not a number"
+                      tax_id: "is not a valid CNPJ"
+                      type: "invalid account type"
+                    friendly_message: "Some of the information entered is incorrect; please review it and try again."
+        '409':
+          description: Conflito - Conta já existente para este documento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                accountAlreadyExists:
+                  value:
+                    code_error: "ILMS-1003"
+                    cause: "ERROR: duplicate key value violates unique constraint \"idx_account_external_currency\" (SQLSTATE 23505)"
+                    friendly_message: "Account already exists."
+        '500':
+          description: Erro interno no servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /transactions:
+    post:
+      summary: Cria uma transação (Partidas Dobradas)
+      description: |
+        Realiza um lançamento contábil garantindo que a soma dos débitos seja exatamente igual à soma dos créditos.
+        Requer o uso do cabeçalho `Idempotency-Key` para evitar transações duplicadas em retentativas.
+      operationId: createTransaction
+      tags:
+        - Transactions
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Chave de idempotência (UUID) para garantir que requisições repetidas não dupliquem a transação financeira.
+          schema:
+            type: string
+            format: uuid
+            example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+      responses:
+        '201':
+          description: Transação efetuada com sucesso e persistida via Outbox Pattern.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Erro de validação (ex. Débitos e Créditos não batem)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Regra de negócio violada (ex. Saldo insuficiente na conta de origem)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno do servidor (Database Tx falhou)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Healthcheck
+      description: Verifica se o serviço e suas dependências (banco de dados pgx/v5) estão saudáveis.
+      operationId: checkHealth
+      tags:
+        - Observability
+      responses:
+        '200':
+          description: Serviço operante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '500':
+          description: Serviço inoperante ou falha de conectividade com dependências
+
+components:
+  schemas:
+    CreateAccountRequest:
+      type: object
+      required:
+        - account_external_id
+        - account_number
+        - tax_id
+        - account_type
+        - currency
+      properties:
+        account_external_id:
+          type: string
+          format: uuid
+          description: ID externo da conta (deve ser um UUID válido).
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        account_number:
+          type: string
+          description: Número da conta.
+          example: "123456789"
+        tax_id:
+          type: string
+          description: Documento de identificação válido (CNPJ ou CPF).
+          example: "12345678000199"
+        account_type:
+          type: string
+          description: Tipo da conta.
+          enum: [ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE]
+          example: "ASSET"
+        currency:
+          type: string
+          description: Moeda da conta.
+          enum: [BRL, USD, EUR]
+          example: "BRL"
+
+    AccountResponse:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+
+    Money:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          format: int64
+          description: Valor monetário expresso sempre na menor fração (ex. centavos) para evitar imprecisões de ponto flutuante.
+          example: 150000
+        currency:
+          type: string
+          example: "BRL"
+
+    EntryRequest:
+      type: object
+      required:
+        - account_id
+        - amount
+        - operation
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          example: "d290f1ee-6c54-4b01-90e6-d701748f0851"
+        amount:
+          $ref: '#/components/schemas/Money'
+        operation:
+          type: string
+          enum: [DEBIT, CREDIT]
+          example: "DEBIT"
+
+    CreateTransactionRequest:
+      type: object
+      required:
+        - description
+        - entries
+      properties:
+        description:
+          type: string
+          description: Histórico ou motivo da transação contábil.
+          example: "Transferência de Pagamento Fatura #1029"
+        entries:
+          type: array
+          minItems: 2
+          description: Lista de entradas (débitos e créditos). A soma dos débitos deve ser igual à soma dos créditos.
+          items:
+            $ref: '#/components/schemas/EntryRequest'
+
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        description:
+          type: string
+          example: "Transferência de Pagamento Fatura #1029"
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+          example: "COMPLETED"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-07T10:00:00Z"
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "UP"
+        database:
+          type: string
+          example: "CONNECTED"
+
+    ErrorResponse:
+      type: object
+      properties:
+        code_error:
+          type: string
+          description: Código de erro interno da aplicação.
+        cause:
+          type: string
+          description: Causa técnica do erro (quando aplicável).
+        error_fields:
+          type: object
+          description: Detalhes dos campos que falharam na validação.
+          additionalProperties:
+            type: string
+        friendly_message:
+          type: string
+          description: Mensagem amigável sobre o erro.

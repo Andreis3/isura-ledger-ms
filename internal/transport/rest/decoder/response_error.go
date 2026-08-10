@@ -16,6 +16,7 @@ const (
 
 type TypeResponseError struct {
 	CodeError       string         `json:"code_error"`
+	Cause           string         `json:"cause,omitempty"`
 	ErrorFields     map[string]any `json:"error_fields,omitempty"`
 	FriendlyMessage any            `json:"friendly_message"`
 }
@@ -24,6 +25,7 @@ func ResponseError(write http.ResponseWriter, err error) {
 	if t, ok := errors.AsType[*fault.DomainError](err); ok {
 		result := TypeResponseError{
 			CodeError:       string(t.Code),
+			Cause:           t.Cause.Error(),
 			ErrorFields:     t.Fields,
 			FriendlyMessage: t.FriendlyMessage,
 		}

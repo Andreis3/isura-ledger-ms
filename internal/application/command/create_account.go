@@ -43,10 +43,10 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 	defer span.End()
 	defer c.metrics.RecordCommandDuration("CreateAccount", float64(time.Since(start).Milliseconds()))
 
-	//c.log.InfoJSON("CreateAccount received request",
-	//	slog.String("trace_id", tracerID),
-	//	slog.Any("input", MaskSlogValue[dto.CreateAccountInput](input)),
-	//)
+	c.log.InfoJSON("CreateAccount received request",
+		slog.String("trace_id", tracerID),
+		slog.Any("input", MaskSlogValue[dto.CreateAccountInput](input)),
+	)
 
 	accountEntity, err := c.validate(input)
 	if err != nil {
@@ -112,11 +112,11 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 		return nil, err
 	}
 
-	//c.log.InfoJSON("CreateAccount account created successfully",
-	//	slog.String("trace_id", tracerID),
-	//	slog.String("account_id", string(accountEntity.ID)),
-	//	slog.String("account_external_id", accountEntity.AccountExternalID),
-	//)
+	c.log.InfoJSON("CreateAccount account created successfully",
+		slog.String("trace_id", tracerID),
+		slog.String("account_id", string(accountEntity.ID)),
+		slog.String("account_external_id", accountEntity.AccountExternalID),
+	)
 
 	return &dto.CreateAccountOutput{
 		AccountID: new(string(accountEntity.ID)),

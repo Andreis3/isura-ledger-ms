@@ -8,7 +8,7 @@ import (
 type CreateAccountInput struct {
 	AccountExternalID string `json:"account_external_id"`
 	AccountNumber     string `json:"account_number"`
-	TaxID             string `json:"tax_id"`
+	TaxID             string `json:"tax_id" sensitive:"partial"`
 	AccountType       string `json:"account_type"`
 	Currency          string `json:"currency"`
 }
