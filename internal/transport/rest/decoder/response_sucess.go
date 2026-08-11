@@ -1,19 +1,19 @@
 package decoder
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"github.com/bytedance/sonic"
 )
 
-func ResponseSuccess[T any](write http.ResponseWriter, status int, data T) {
-	write.Header().Set(ContentType, ApplicationJSON)
-	write.WriteHeader(status)
-	result := data
+func ResponseSuccess[T any](w http.ResponseWriter, statusCode int, data T) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
 
-	if any(result) == nil {
-		_ = json.NewEncoder(write)
+	jsonBytes, err := sonic.Marshal(data)
+	if err != nil {
+		// Tratar erro de serialização se necessário
 		return
 	}
-
-	_ = json.NewEncoder(write).Encode(result)
+	_, _ = w.Write(jsonBytes)
 }

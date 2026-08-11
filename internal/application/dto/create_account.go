@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"log/slog"
+
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
 	"github.com/google/uuid"
 )
@@ -32,4 +34,15 @@ func (d *CreateAccountInput) CreateAccountFacade(id ...string) (*account.Account
 		WithCreatedAt().
 		WithUpdatedAt().
 		Build()
+}
+
+// LogValue implements the slog.LogValuer interface statically and without reflection.
+func (i CreateAccountInput) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("account_external_id", i.AccountExternalID),
+		slog.String("tax_id", MaskMiddleVisible(i.TaxID)),
+		slog.String("account_number", i.AccountNumber),
+		slog.String("account_type", i.AccountType),
+		slog.String("currency", i.Currency),
+	)
 }
