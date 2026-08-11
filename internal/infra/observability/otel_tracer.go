@@ -37,7 +37,7 @@ func (s *otelSpan) RecordError(err error) {
 }
 
 func (s *otelSpan) SpanContext() application.SpanContext {
-	return &otelSpanContext{s.Span.SpanContext()} // ✅ calls the SpanContext of the OTEL field
+	return &otelSpanContext{s.Span.SpanContext()}
 }
 
 type otelSpanContext struct {
@@ -48,13 +48,14 @@ func (sc *otelSpanContext) TraceID() string {
 	return sc.SpanContext.TraceID().String()
 }
 
-// InitOtelTracer ✅ This function initializes OpenTelemetry completely and returns the Tracer adapter.
 func InitOtelTracer(ctx context.Context, cfg *configs.Configs) (application.Tracer, func(context.Context) error, error) {
 	exporter, err := otlptracehttp.New(
 		ctx,
 		otlptracehttp.WithEndpoint(cfg.OpenTelemetry.Host),
 		otlptracehttp.WithInsecure(),
-		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
+		// Tip: Remove Gzip compression if the collector is on the same machine/internal network
+		// or reduce CPU pressure/Huffman buffers if the load is extreme.
+		// otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create OTLP exporter: %w", err)
@@ -69,24 +70,29 @@ func InitOtelTracer(ctx context.Context, cfg *configs.Configs) (application.Trac
 		sdkresource.WithOS(),
 		sdkresource.WithHost(),
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create resource: %w", err)
 	}
 
-	sampler := sdktrace.AlwaysSample()
-	if cfg.Env == "production" {
-		sampler = sdktrace.TraceIDRatioBased(0.1)
+	// 💡 CRITICAL OPTIMIZATION: Also reduce sampling outside of production if running load tests
+	// Use 1% (0.01) or 5% (0.05) for high-concurrency stress tests.
+	sampleRate := 1.0 // Default for dev
+	if cfg.Env == "dev" || cfg.Env == "staging" || cfg.Env == "load-test" {
+		sampleRate = 0.05 // Collects only 5% of traces under high load
 	}
+	sampler := sdktrace.TraceIDRatioBased(sampleRate)
 
 	provider := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exporter),
+		sdktrace.WithBatcher(exporter,
+			// Fine-tune the batch processor to relieve queue contention
+			sdktrace.WithMaxQueueSize(4096),
+			sdktrace.WithMaxExportBatchSize(512),
+		),
 		sdktrace.WithResource(resource),
 		sdktrace.WithSampler(sampler),
 	)
 
 	otel.SetTracerProvider(provider)
 
-	// Returns the Tracer adapter and the shutdown function
 	return &otelTracer{tracer: provider.Tracer(cfg.ApplicationName)}, provider.Shutdown, nil
 }

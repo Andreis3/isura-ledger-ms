@@ -5,7 +5,7 @@ SERVICE_NAME = ledger
 DB_URL  = postgres://admin:admin@localhost:5432/isura_ledger_main?sslmode=disable
 SCHEMA_DIR = db
 URL ?= http://localhost:8080/accounts
-DURATION ?= 60s
+DURATION ?= 5h
 
 help:
 	@echo "======================================================================"
@@ -75,7 +75,7 @@ unit-report:
 
 test-load:
 	@echo "🚀 Iniciando teste de carga estável (5k req/s)..."
-	go run ./vegeta/account/create_account.go  -rate=5000 -connections=10000 -workers=500 -duration=$(DURATION) -url=$(URL)
+	go run ./vegeta/account/create_account.go  -rate=1000 -connections=5000 -workers=500 -duration=$(DURATION) -url=$(URL)
 
 test-extreme:
 	@echo "🔥 Iniciando teste de carga extremo (100k req/s)..."

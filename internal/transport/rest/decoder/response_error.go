@@ -1,12 +1,12 @@
 package decoder
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/transport/rest/translator"
+	"github.com/bytedance/sonic"
 )
 
 const (
@@ -22,6 +22,8 @@ type TypeResponseError struct {
 }
 
 func ResponseError(write http.ResponseWriter, err error) {
+	write.Header().Set(ContentType, ApplicationJSON)
+
 	if t, ok := errors.AsType[*fault.DomainError](err); ok {
 		result := TypeResponseError{
 			CodeError:       string(t.Code),
@@ -30,18 +32,16 @@ func ResponseError(write http.ResponseWriter, err error) {
 			FriendlyMessage: t.FriendlyMessage,
 		}
 
-		write.Header().Set(ContentType, ApplicationJSON)
 		write.WriteHeader(translator.TranslatorStatusCode[t.Code].HTTPStatus)
-		_ = json.NewEncoder(write).Encode(result)
+		_ = sonic.ConfigDefault.NewEncoder(write).Encode(result)
 		return
 	}
 
-	write.Header().Set(ContentType, ApplicationJSON)
 	write.WriteHeader(http.StatusInternalServerError)
 
 	result := TypeResponseError{
 		FriendlyMessage: "Internal server error",
 	}
 
-	_ = json.NewEncoder(write).Encode(result)
+	_ = jsonEngine.NewEncoder(write).Encode(result)
 }

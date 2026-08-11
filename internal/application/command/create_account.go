@@ -45,7 +45,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 
 	c.log.InfoJSON("CreateAccount received request",
 		slog.String("trace_id", tracerID),
-		slog.Any("input", MaskSlogValue[dto.CreateAccountInput](input)),
+		slog.Any("input", input),
 	)
 
 	accountEntity, err := c.validate(input)
