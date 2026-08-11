@@ -37,12 +37,12 @@ func (d *CreateAccountInput) CreateAccountFacade(id ...string) (*account.Account
 }
 
 // LogValue implements the slog.LogValuer interface statically and without reflection.
-func (i CreateAccountInput) LogValue() slog.Value {
+func (d CreateAccountInput) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.String("account_external_id", i.AccountExternalID),
-		slog.String("tax_id", MaskMiddleVisible(i.TaxID)),
-		slog.String("account_number", i.AccountNumber),
-		slog.String("account_type", i.AccountType),
-		slog.String("currency", i.Currency),
+		slog.String("account_external_id", d.AccountExternalID),
+		slog.String("tax_id", MaskMiddleVisible(d.TaxID)),
+		slog.String("account_number", MaskTotal(d.AccountNumber)),
+		slog.String("account_type", d.AccountType),
+		slog.String("currency", d.Currency),
 	)
 }
