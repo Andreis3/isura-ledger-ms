@@ -11,6 +11,12 @@ import (
 )
 
 func TestTransaction(t *testing.T) {
+	suiteConfig, reporterConfig := GinkgoConfiguration()
+
+	suiteConfig.SkipStrings = []string{"SKIPPED", "PENDING", "NEVER-RUN", "SKIP"}
+	reporterConfig.FullTrace = true
+	reporterConfig.Verbose = true
+
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Transaction Suite")
+	RunSpecs(t, "Transaction Domain Suite", suiteConfig, reporterConfig)
 }

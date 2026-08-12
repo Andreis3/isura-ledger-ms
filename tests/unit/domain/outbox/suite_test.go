@@ -11,6 +11,12 @@ import (
 )
 
 func TestOutbox(t *testing.T) {
+	suiteConfig, reporterConfig := GinkgoConfiguration()
+
+	suiteConfig.SkipStrings = []string{"SKIPPED", "PENDING", "NEVER-RUN", "SKIP"}
+	reporterConfig.FullTrace = true
+	reporterConfig.Verbose = true
+
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Outbox Suite")
+	RunSpecs(t, "Outbox Domain Suite", suiteConfig, reporterConfig)
 }
