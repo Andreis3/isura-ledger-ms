@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/andreis3/isura-ledger-ms/internal/domain/entity"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/shared"
@@ -55,7 +56,7 @@ func (s Status) IsValid() bool {
 
 // AccountBuilder builds an Account step by step with validation.
 type AccountBuilder struct {
-	id                AccountID
+	id                entity.ID
 	accountExternalID string
 	accountNumber     string
 	taxID             string
@@ -73,7 +74,7 @@ func NewAccountBuilder() *AccountBuilder {
 }
 
 type Account struct {
-	ID                AccountID
+	ID                entity.ID
 	AccountExternalID string
 	AccountNumber     string
 	TaxID             string
@@ -85,10 +86,22 @@ type Account struct {
 }
 
 // WithID sets the ID (required).
-func (b *AccountBuilder) WithID(id string) *AccountBuilder {
-	b.eval.CheckField(validator.NotBlank(id), "id", "cannot be blank")
-	b.eval.CheckField(validator.MatchesUUID(id), "id", "is not uuid")
-	b.id = AccountID(id)
+func (b *AccountBuilder) WithID(id ...string) *AccountBuilder {
+	if len(id) > 0 {
+		b.eval.CheckField(validator.NotBlank(id[0]), "id", "cannot be blank")
+		b.eval.CheckField(validator.MatchesUUID(id[0]), "id", "is not uuid")
+		uuidV7, err := entity.NewID(id[0])
+		if err != nil {
+			b.eval.AddFieldError("id", err.Error())
+		}
+
+		b.id = uuidV7
+	}
+	uuidv7, err := entity.NewIDV7()
+	if err != nil {
+		b.eval.AddFieldError("id", err.Error())
+	}
+	b.id = uuidv7
 	return b
 }
 

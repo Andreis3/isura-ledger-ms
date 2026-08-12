@@ -4,8 +4,13 @@ DOCKER_COMPOSE = docker compose
 SERVICE_NAME = ledger
 DB_URL  = postgres://admin:admin@localhost:5432/isura_ledger_main?sslmode=disable
 SCHEMA_DIR = db
-URL ?= http://localhost:8080/accounts
-DURATION ?= 5h
+# ── Variáveis de Teste de Carga (Vegeta) ─────────────────────
+ PATH_VEGETA ?= ./vegeta/account/create_account.go
+ URL         ?= http://localhost:8080/accounts
+ DURATION    ?= 60s
+ RATE        ?= 1000
+ CONNECTIONS ?= 5000
+ WORKERS     ?= 500
 
 help:
 	@echo "======================================================================"
@@ -25,8 +30,7 @@ help:
 	@echo "   make unit-report      - Gera relatório HTML e de funções da cobertura"
 	@echo ""
 	@echo " [ Testes de Carga (Vegeta) ]"
-	@echo "   make test-load        - Roda o teste estável (5.000 req/s, 10.000 conexões)"
-	@echo "   make test-extreme     - Roda o teste de alto rendimento (100.000 req/s)"
+	@echo "   make test-load        - Roda teste de carga (Variáveis: PATH_VEGETA, URL, RATE, CONNECTIONS, WORKERS, DURATION) "
 	@echo ""
 	@echo " [ Docker & Infraestrutura ]"
 	@echo "   make build            - Faz build da imagem local sem cache"
@@ -74,12 +78,9 @@ unit-report:
 	&& go tool cover -func=coverage/cover.out -o coverage/cover.functions.html
 
 test-load:
-	@echo "🚀 Iniciando teste de carga estável (5k req/s)..."
-	go run ./vegeta/account/create_account.go  -rate=1000 -connections=5000 -workers=500 -duration=$(DURATION) -url=$(URL)
+	@echo "🚀 Iniciando teste de carga estável ($(RATE) req/s) usando $(PATH_VEGETA)..."
+	go run $(PATH_VEGETA) -rate=$(RATE) -connections=$(CONNECTIONS) -workers=$(WORKERS) -duration=$(DURATION) -url=$(URL)
 
-test-extreme:
-	@echo "🔥 Iniciando teste de carga extremo (100k req/s)..."
-	go run ./vegeta/account/create_account.go  -rate=100000 -connections=100000 -workers=500 -duration=$(DURATION) -url=$(URL)
 
 # 1. Build da imagem local usando o Dockerfile.local
 build:
@@ -137,5 +138,4 @@ migrate:
 		air,
 		run-race,
 		test-load,
-		test-extreme,
 		help

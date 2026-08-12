@@ -21,7 +21,7 @@ type Account struct {
 func ToAccountModel(entity *account.Account) Account {
 	return Account{
 		ID: pgtype.Text{
-			String: string(entity.ID),
+			String: entity.ID.String(),
 			Valid:  true,
 		},
 		AccountExternalID: pgtype.Text{
