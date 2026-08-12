@@ -73,6 +73,40 @@ func MatchesUUID(value string) bool {
 	return true
 }
 
+// MatchesUUIDv7 validates the UUIDv7 format without allocating memory on the heap via regex.
+func MatchesUUIDv7(value string) bool {
+	if len(value) != 36 {
+		return false
+	}
+
+	for i := 0; i < len(value); i++ {
+		c := value[i]
+		switch i {
+		case 8, 13, 18, 23:
+			if c != '-' {
+				return false
+			}
+		case 14:
+			// UUID version must be strictly '7' for UUIDv7
+			if c != '7' {
+				return false
+			}
+		case 19:
+			// UUID variant must be '8', '9', 'a', 'b', 'A', 'B'
+			if c != '8' && c != '9' && c != 'a' && c != 'b' && c != 'A' && c != 'B' {
+				return false
+			}
+		default:
+			// Other positions must be hexadecimal [0-9a-fA-F]
+			if !isHex(c) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// Helper to check if a character is a valid hexadecimal digit.
 func isHex(c byte) bool {
 	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
 }
