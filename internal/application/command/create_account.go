@@ -6,13 +6,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
-	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
-	"github.com/google/uuid"
-
 	"github.com/andreis3/isura-ledger-ms/internal/application"
+	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 )
 
 type CreateAccount struct {
@@ -85,7 +83,7 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 		)
 		c.metrics.RecordCommandTotal("CreateAccount", "exist")
 		return &dto.CreateAccountOutput{
-			AccountID: new(string(existing.ID)),
+			AccountID: new(existing.ID.String()),
 		}, nil
 	}
 
@@ -114,17 +112,16 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 
 	c.log.InfoJSON("CreateAccount account created successfully",
 		slog.String("trace_id", tracerID),
-		slog.String("account_id", string(accountEntity.ID)),
+		slog.String("account_id", accountEntity.ID.String()),
 		slog.String("account_external_id", accountEntity.AccountExternalID),
 	)
 
 	return &dto.CreateAccountOutput{
-		AccountID: new(string(accountEntity.ID)),
+		AccountID: new(accountEntity.ID.String()),
 	}, nil
 }
 
 func (c *CreateAccount) validate(input dto.CreateAccountInput) (*account.Account, error) {
-	id := uuid.New().String()
 
-	return input.CreateAccountFacade(id)
+	return input.CreateAccountFacade()
 }

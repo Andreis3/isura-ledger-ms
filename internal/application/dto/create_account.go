@@ -4,7 +4,6 @@ import (
 	"log/slog"
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
-	"github.com/google/uuid"
 )
 
 type CreateAccountInput struct {
@@ -19,12 +18,10 @@ type CreateAccountOutput struct {
 	AccountID *string `json:"account_id"`
 }
 
-func (d *CreateAccountInput) CreateAccountFacade(id ...string) (*account.Account, error) {
-	if len(id) == 0 {
-		id[0] = uuid.New().String()
-	}
+func (d *CreateAccountInput) CreateAccountFacade() (*account.Account, error) {
+
 	return account.NewAccountBuilder().
-		WithID(id[0]).
+		WithID().
 		WithAccountExternalID(d.AccountExternalID).
 		WithAccountNumber(d.AccountNumber).
 		WithTaxID(d.TaxID).
