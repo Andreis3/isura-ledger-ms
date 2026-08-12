@@ -89,18 +89,21 @@ type Account struct {
 func (b *AccountBuilder) WithID(id ...string) *AccountBuilder {
 	if len(id) > 0 {
 		b.eval.CheckField(validator.NotBlank(id[0]), "id", "cannot be blank")
-		b.eval.CheckField(validator.MatchesUUID(id[0]), "id", "is not uuid")
+		b.eval.CheckField(validator.MatchesUUIDv7(id[0]), "id", "is not uuid v7")
 		uuidV7, err := entity.NewID(id[0])
 		if err != nil {
 			b.eval.AddFieldError("id", err.Error())
 		}
 
 		b.id = uuidV7
+		return b
 	}
+
 	uuidv7, err := entity.NewIDV7()
 	if err != nil {
 		b.eval.AddFieldError("id", err.Error())
 	}
+
 	b.id = uuidv7
 	return b
 }
