@@ -26,5 +26,6 @@ func BuildRoutes(st *SetupDeps) []ModuleRoutes {
 		module.NewPPROF(),
 		module.NewHealthCheck(st.Deps.Pg, st.Deps.Cfg.ApplicationName),
 		module.NewAccountModule(*st.Deps),
+		module.NewTransactionModule(*st.Deps),
 	}
 }

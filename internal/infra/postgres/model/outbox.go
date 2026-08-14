@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/andreis3/isura-ledger-ms/internal/domain/entity"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/outbox"
@@ -23,7 +24,7 @@ type Outbox struct {
 func ToOutboxModel(domain *outbox.Outbox) Outbox {
 	return Outbox{
 		ID: pgtype.Text{
-			String: string(domain.ID),
+			String: domain.ID.String(),
 			Valid:  true,
 		},
 		Status: pgtype.Text{
@@ -56,17 +57,22 @@ func ToOutboxModel(domain *outbox.Outbox) Outbox {
 	}
 }
 
-func ToOutboxDomain(model Outbox) *outbox.Outbox {
-	return &outbox.Outbox{
-		ID:            outbox.OutboxID(model.ID.String),
-		EventType:     outbox.EventType(model.EventType.String),
-		Attempts:      int(model.Attempts.Int16),
-		AggregateType: outbox.AggregateType(model.AggregateType.String),
-		AggregateID:   string(model.AggregateID.String),
-		Status:        outbox.StatusOutbox(model.Status.String),
-		Payload:       model.Payload,
-		CreatedAt:     model.CreatedAt.Time,
-		LastAttemptAt: database.ToTimePtr(model.LastAttemptAt),
-		PublishedAt:   database.ToTimePtr(model.PublishedAt),
+func ToOutboxDomain(model Outbox) (*outbox.Outbox, error) {
+	id, err := entity.NewID(model.ID.String)
+	if err != nil {
+		return nil, err
 	}
+
+	return outbox.NewOutboxBuilder().
+		WithID(id.String()).
+		WithAggregateID(model.AggregateID.String).
+		WithAggregateType(outbox.AggregateType(model.AggregateType.String)).
+		WithEventType(outbox.EventType(model.EventType.String)).
+		WithPayload(model.Payload).
+		WithStatus(outbox.StatusOutbox(model.Status.String)).
+		WithAttempts(int(model.Attempts.Int16)).
+		WithCreatedAt(model.CreatedAt.Time).
+		WithPublishedAt(model.PublishedAt.Time).
+		Build()
+
 }

@@ -19,7 +19,6 @@ type CreateAccountOutput struct {
 }
 
 func (d *CreateAccountInput) CreateAccountFacade() (*account.Account, error) {
-
 	return account.NewAccountBuilder().
 		WithID().
 		WithAccountExternalID(d.AccountExternalID).

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/andreis3/isura-ledger-ms/internal/domain/entity"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/outbox"
@@ -54,7 +55,7 @@ func (r *OutBoxRepository) Save(ctx context.Context, outbox *outbox.Outbox) erro
 	return err
 
 }
-func (r *OutBoxRepository) FindAllByStatusForUpdateSkipLocked(ctx context.Context, status outbox.StatusOutbox, limit int) ([]*outbox.Outbox, error) {
+func (r *OutBoxRepository) FindAll(ctx context.Context, status outbox.StatusOutbox, limit int) ([]*outbox.Outbox, error) {
 	db := resolveDB(ctx, r.db)
 
 	query := `
@@ -99,7 +100,10 @@ func (r *OutBoxRepository) FindAllByStatusForUpdateSkipLocked(ctx context.Contex
 		); err != nil {
 			return nil, err
 		}
-		outbox := model.ToOutboxDomain(outboxModel)
+		outbox, err := model.ToOutboxDomain(outboxModel)
+		if err != nil {
+			return nil, err
+		}
 		outboxes = append(outboxes, outbox)
 	}
 
@@ -109,7 +113,7 @@ func (r *OutBoxRepository) FindAllByStatusForUpdateSkipLocked(ctx context.Contex
 
 	return outboxes, nil
 }
-func (r *OutBoxRepository) UpdateOutboxData(ctx context.Context, outboxID outbox.OutboxID, data outbox.UpdateOutboxData) error {
+func (r *OutBoxRepository) UpdateOutboxData(ctx context.Context, outboxID entity.ID, data outbox.UpdateOutboxData) error {
 	db := resolveDB(ctx, r.db)
 
 	query := `
@@ -123,7 +127,7 @@ func (r *OutBoxRepository) UpdateOutboxData(ctx context.Context, outboxID outbox
 		pgtype.Int2{Int16: int16(data.Attempts), Valid: true},
 		database.ToTimestamptz(data.LastAttemptAt),
 		database.ToTimestamptz(data.PublishedAt),
-		pgtype.Text{String: string(outboxID), Valid: true},
+		pgtype.Text{String: outboxID.String(), Valid: true},
 	)
 
 	return err

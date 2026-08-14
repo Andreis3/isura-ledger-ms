@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/entity"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/outbox"
 )
 
@@ -44,7 +45,7 @@ func (r *ObservabilityOutboxRepo) Save(ctx context.Context, outbox *outbox.Outbo
 	return nil
 }
 
-func (r *ObservabilityOutboxRepo) FindAllByStatusForUpdateSkipLocked(ctx context.Context, status outbox.StatusOutbox, limit int) ([]*outbox.Outbox, error) {
+func (r *ObservabilityOutboxRepo) FindAll(ctx context.Context, status outbox.StatusOutbox, limit int) ([]*outbox.Outbox, error) {
 	ctx, span := r.tracer.Start(ctx, "OutboxRepository.FindAllByStatusForUpdateSkipLocked")
 	defer span.End()
 
@@ -57,7 +58,7 @@ func (r *ObservabilityOutboxRepo) FindAllByStatusForUpdateSkipLocked(ctx context
 			float64(time.Since(start).Milliseconds()))
 	}()
 
-	outboxes, err := r.repo.FindAllByStatusForUpdateSkipLocked(ctx, status, limit)
+	outboxes, err := r.repo.FindAll(ctx, status, limit)
 
 	if err != nil {
 		span.RecordError(err)
@@ -67,7 +68,7 @@ func (r *ObservabilityOutboxRepo) FindAllByStatusForUpdateSkipLocked(ctx context
 	return outboxes, nil
 }
 
-func (r *ObservabilityOutboxRepo) UpdateOutboxData(ctx context.Context, outboxID outbox.OutboxID, data outbox.UpdateOutboxData) error {
+func (r *ObservabilityOutboxRepo) UpdateOutboxData(ctx context.Context, outboxID entity.ID, data outbox.UpdateOutboxData) error {
 	ctx, span := r.tracer.Start(ctx, "OutboxRepository.UpdateOutboxData")
 	defer span.End()
 

@@ -79,7 +79,7 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
         FROM accounts 
         WHERE 1=1
     `
-	query, args := criteria.GetCriteria(baseQuery, params)
+	query, args := criteria.GetAccountCriteria(baseQuery, params)
 	var accountModel model.Account
 	err := db.QueryRow(ctx, query, args...).Scan(
 		&accountModel.ID,

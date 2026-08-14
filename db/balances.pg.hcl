@@ -1,18 +1,13 @@
-table "transactions" {
+table "balances" {
   schema = schema.public
 
   column "id" {
-    type = text
+    type = varchar(36)
     null = false
   }
 
-  column "idempotency_key" {
-    type = varchar(50)
-    null = false
-  }
-
-  column "status" {
-    type = varchar(20)
+  column "account_id" {
+    type = varchar(36)
     null = false
   }
 
@@ -35,17 +30,19 @@ table "transactions" {
     type = timestamptz
     null = false
   }
-
+  
   primary_key {
-    columns = [column.id]
+    columns = [ column.id ]
   }
 
-  index "idx_transactions_idempotency_key" {
-    columns = [column.idempotency_key]
+  foreign_key "fk_account_id" {
+    columns = [column.account_id]
+    ref_columns = [table.accounts.column.id]
+  }
+
+  index "idx_balance_account_number_currency" {
+    columns = [column.account_id, column.currency]
     unique  = true
   }
 
-  index "idx_transactions_status" {
-    columns = [column.status]
-  }
 }

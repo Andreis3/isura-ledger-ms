@@ -3,6 +3,8 @@ package money
 import (
 	"errors"
 	"fmt"
+
+	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 )
 
 var (
@@ -33,13 +35,20 @@ type Money struct {
 }
 
 func NewMoney(amount int64, currency Currency) (Money, error) {
-	if amount < 0 {
-		return Money{}, ErrNegativeAmount
+	var fieldsErrors = make(map[string]any)
+	if amount <= 0 {
+		fieldsErrors["amount"] = "amount must be greater than zero"
+
 	}
 
 	if !currency.IsValid() {
-		return Money{}, ErrInvalidCurrency
+		fieldsErrors["currency"] = "invalid currency"
 	}
+
+	if len(fieldsErrors) > 0 {
+		return Money{}, fault.InvalidEntityError(errors.New("invalid entity"), fieldsErrors)
+	}
+
 	return Money{amount, currency}, nil
 }
 

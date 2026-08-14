@@ -1,6 +1,8 @@
 package model
 
 import (
+	"github.com/andreis3/isura-ledger-ms/internal/domain/entity"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/transaction"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -9,6 +11,8 @@ type Transaction struct {
 	ID             pgtype.Text
 	IdempotencyKey pgtype.Text
 	Status         pgtype.Text
+	Amount         pgtype.Int8
+	Currency       pgtype.Text
 	CreatedAt      pgtype.Timestamptz
 	UpdatedAt      pgtype.Timestamptz
 }
@@ -16,7 +20,7 @@ type Transaction struct {
 func ToTransactionModel(domain *transaction.Transaction) Transaction {
 	return Transaction{
 		ID: pgtype.Text{
-			String: string(domain.ID),
+			String: domain.ID.String(),
 			Valid:  true,
 		},
 		IdempotencyKey: pgtype.Text{
@@ -25,6 +29,14 @@ func ToTransactionModel(domain *transaction.Transaction) Transaction {
 		},
 		Status: pgtype.Text{
 			String: string(domain.Status),
+			Valid:  true,
+		},
+		Amount: pgtype.Int8{
+			Int64: domain.Amount.Amount(),
+			Valid: true,
+		},
+		Currency: pgtype.Text{
+			String: string(domain.Amount.Currency()),
 			Valid:  true,
 		},
 		CreatedAt: pgtype.Timestamptz{
@@ -38,13 +50,25 @@ func ToTransactionModel(domain *transaction.Transaction) Transaction {
 	}
 }
 
-func ToTransactionDomain(model Transaction, entries []*transaction.Entry) *transaction.Transaction {
-	return &transaction.Transaction{
-		ID:             transaction.TransactionID(model.ID.String),
-		IdempotencyKey: model.IdempotencyKey.String,
-		Status:         transaction.TransactionStatus(model.Status.String),
-		Entries:        entries,
-		CreatedAt:      model.CreatedAt.Time,
-		UpdatedAt:      model.UpdatedAt.Time,
+func ToTransactionDomain(model Transaction, entries []*transaction.Entry) (*transaction.Transaction, error) {
+	amount, err := money.NewMoney(model.Amount.Int64, money.Currency(model.Currency.String))
+	if err != nil {
+		return nil, err
 	}
+
+	id, err := entity.NewID(model.ID.String)
+	if err != nil {
+		return nil, err
+	}
+
+	return transaction.NewTransactionBuilder().
+		WithID(id.String()).
+		WithIdempotencyKey(model.IdempotencyKey.String).
+		WithStatus(transaction.TransactionStatus(model.Status.String)).
+		WithAmount(amount).
+		WithCreatedAt(model.CreatedAt.Time).
+		WithUpdatedAt(model.UpdatedAt.Time).
+		WithEntries(entries).
+		Build()
+
 }

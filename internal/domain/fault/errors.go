@@ -97,3 +97,23 @@ func ErrorJSON(err error) *DomainError {
 		Cause:           err,
 	}
 }
+
+/******************Money errors *************/
+func InvalidAmountError(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		FriendlyMessage: "Invalid amount",
+		Cause:           err,
+		Origin:          CallerName(2),
+	}
+}
+
+func InvalidCurrencyError(err error, fields map[string]any) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		FriendlyMessage: "Invalid currency",
+		Cause:           err,
+		Origin:          CallerName(2),
+		Fields:          fields,
+	}
+}
