@@ -43,10 +43,34 @@ func (t TransactionStatus) IsValid() bool {
 	return false
 }
 
+type Operation string
+
+const (
+	OperationPixIn      Operation = "PIX_IN"
+	OperationPixOut     Operation = "PIX_OUT"
+	OperationTedIn      Operation = "TED_IN"
+	OperationTedOut     Operation = "TED_OUT"
+	OperationTransfer   Operation = "TRANSFER"
+	OperationDeposit    Operation = "DEPOSIT"
+	OperationWithdrawal Operation = "WITHDRAWAL"
+	OperationFee        Operation = "FEE"
+	OperationRefund     Operation = "REFUND"
+)
+
+func (o Operation) IsValid() bool {
+	switch o {
+	case OperationPixIn, OperationPixOut, OperationTedIn, OperationTedOut,
+		OperationTransfer, OperationDeposit, OperationWithdrawal, OperationFee, OperationRefund:
+		return true
+	}
+	return false
+}
+
 type TransactionBuilder struct {
 	id             entity.ID
 	idempotencyKey string
 	status         TransactionStatus
+	operation      Operation
 	entries        []*Entry
 	amount         money.Money
 	createdAt      time.Time
@@ -58,6 +82,7 @@ type Transaction struct {
 	ID             entity.ID
 	IdempotencyKey string
 	Status         TransactionStatus
+	Operation      Operation
 	Amount         money.Money
 	Entries        []*Entry
 	CreatedAt      time.Time
@@ -172,6 +197,13 @@ func (b *TransactionBuilder) WithUpdatedAt(updatedAt ...time.Time) *TransactionB
 	return b
 }
 
+// WithOperation sets the operation
+func (b *TransactionBuilder) WithOperation(operation Operation) *TransactionBuilder {
+	b.eval.CheckField(operation.IsValid(), "operation", "invalid transaction operation")
+	b.operation = operation
+	return b
+}
+
 // Build builds the transaction
 func (b *TransactionBuilder) Build() (*Transaction, error) {
 	if len(b.eval) > 0 {
@@ -184,6 +216,7 @@ func (b *TransactionBuilder) Build() (*Transaction, error) {
 		ID:             b.id,
 		IdempotencyKey: b.idempotencyKey,
 		Status:         b.status,
+		Operation:      b.operation,
 		Amount:         b.amount,
 		Entries:        b.entries,
 		CreatedAt:      shared.CoalesceTime(b.createdAt, now),

@@ -153,19 +153,41 @@ func (c *CreateTransaction) Execute(ctx context.Context, input dto.CreateTransac
 			return account.ErrAccountNotFound
 		}
 
-		var mapAccocunt = make(map[string]*transaction.Entry)
-		for entry := range entityTransaction.Entries {
-			mapAccocunt[entityTransaction.Entries[entry].AccountExternalID] = entityTransaction.Entries[entry]
+		txCurrency := entityTransaction.Amount.Currency()
+
+		if debitAccount.Currency.Mismatch(txCurrency) {
+			errMismatch := errors.New(string("currency mismatch: account currency " + debitAccount.Currency + " does not match transaction currency " + txCurrency))
+			span.RecordError(errMismatch)
+			c.log.CriticalJSON("CreateTransaction failed due to currency mismatch",
+				append([]any{
+					slog.String("trace_id", tracerID)},
+					fault.Attrs(fault.ErrCurrencyMismatch(errMismatch))...)...,
+			)
+			return fault.ErrCurrencyMismatch(errMismatch)
 		}
 
-		debitEntry := mapAccocunt[debitAccount.AccountExternalID]
-		debitEntry.AddAccountID(debitAccount.ID.String())
+		if creditAccount.Currency.Mismatch(txCurrency) {
+			errMismatch := errors.New(string("currency mismatch: account currency " + creditAccount.Currency + " does not match transaction currency " + txCurrency))
+			span.RecordError(errMismatch)
+			c.log.CriticalJSON("CreateTransaction failed due to currency mismatch",
+				append([]any{
+					slog.String("trace_id", tracerID)},
+					fault.Attrs(fault.ErrCurrencyMismatch(errMismatch))...)...,
+			)
+			return fault.ErrCurrencyMismatch(errMismatch)
+		}
 
-		creditEntry := mapAccocunt[creditAccount.AccountExternalID]
-		creditEntry.AddAccountID(creditAccount.ID.String())
+		// Associate internal account ID and transaction ID by iterating through entries
+		for _, entry := range entityTransaction.Entries {
+			entry.AddTransnactionID(entityTransaction.ID.String())
 
-		debitEntry.AddTransnactionID(entityTransaction.ID.String())
-		creditEntry.AddTransnactionID(entityTransaction.ID.String())
+			switch entry.Direction {
+			case transaction.Debit:
+				entry.AddAccountID(debitAccount.ID.String())
+			case transaction.Credit:
+				entry.AddAccountID(creditAccount.ID.String())
+			}
+		}
 
 		err = c.transactionRepository.Save(ctxTx, entityTransaction)
 		if err != nil {
@@ -203,6 +225,7 @@ func (c *CreateTransaction) Execute(ctx context.Context, input dto.CreateTransac
 
 	if errUow != nil {
 		span.RecordError(errUow)
+		return nil, errUow
 	}
 
 	return output, nil

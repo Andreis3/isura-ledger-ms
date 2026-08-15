@@ -26,6 +26,11 @@ table "transactions" {
     null = false
   }
 
+  column "operation" {
+    type = varchar(30)
+    null = false
+  }
+
   column "created_at" {
     type = timestamptz
     null = false
@@ -47,5 +52,9 @@ table "transactions" {
 
   index "idx_transactions_status" {
     columns = [column.status]
+  }
+
+  index "idx_transactions_operation" {
+    columns = [column.operation]
   }
 }

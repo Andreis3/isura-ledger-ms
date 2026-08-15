@@ -11,6 +11,7 @@ type Transaction struct {
 	ID             pgtype.Text
 	IdempotencyKey pgtype.Text
 	Status         pgtype.Text
+	Operation      pgtype.Text
 	Amount         pgtype.Int8
 	Currency       pgtype.Text
 	CreatedAt      pgtype.Timestamptz
@@ -29,6 +30,10 @@ func ToTransactionModel(domain *transaction.Transaction) Transaction {
 		},
 		Status: pgtype.Text{
 			String: string(domain.Status),
+			Valid:  true,
+		},
+		Operation: pgtype.Text{
+			String: string(domain.Operation),
 			Valid:  true,
 		},
 		Amount: pgtype.Int8{
@@ -66,6 +71,7 @@ func ToTransactionDomain(model Transaction, entries []*transaction.Entry) (*tran
 		WithIdempotencyKey(model.IdempotencyKey.String).
 		WithStatus(transaction.TransactionStatus(model.Status.String)).
 		WithAmount(amount).
+		WithOperation(transaction.Operation(model.Operation.String)).
 		WithCreatedAt(model.CreatedAt.Time).
 		WithUpdatedAt(model.UpdatedAt.Time).
 		WithEntries(entries).

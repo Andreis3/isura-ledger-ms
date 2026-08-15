@@ -48,6 +48,15 @@ func InvalidEntityError(err error, fields map[string]any) *DomainError {
 	}
 }
 
+func ErrCurrencyMismatch(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		Cause:           err,
+		FriendlyMessage: err.Error(),
+		Origin:          CallerName(2),
+	}
+}
+
 /***************UOW Errors****************/
 func BeginTransactionError(err error) *DomainError {
 	return &DomainError{

@@ -9,7 +9,24 @@ import (
 
 type responseWriterWrapperMetrics struct {
 	http.ResponseWriter
-	statusCode int
+	statusCode  int
+	wroteHeader bool
+}
+
+func (w *responseWriterWrapperMetrics) WriteHeader(statusCode int) {
+	if w.wroteHeader {
+		return
+	}
+	w.statusCode = statusCode
+	w.wroteHeader = true
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *responseWriterWrapperMetrics) Write(p []byte) (int, error) {
+	if !w.wroteHeader {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(p)
 }
 
 // MetricsMiddleware is an HTTP middleware that records request metrics, equivalent to gRPC's MetricsInterceptor.

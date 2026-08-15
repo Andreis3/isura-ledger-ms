@@ -12,6 +12,7 @@ type CreateTransactionInput struct {
 	IdempotencyKey  *string `json:"idempotency_key"`
 	DebitAccountID  *string `json:"debit_account_id"`
 	CreditAccountID *string `json:"credit_account_id"`
+	Operation       *string `json:"operation"`
 	Amount          *int64  `json:"amount"`
 	Currency        *string `json:"currency"`
 }
@@ -56,6 +57,7 @@ func (d *CreateTransactionInput) CreateTransactionFacade() (*transaction.Transac
 		WithIdempotencyKey(util.String(d.IdempotencyKey)).
 		WithStatus(transaction.Pending).
 		WithAmount(amount).
+		WithOperation(transaction.Operation(util.String(d.Operation))).
 		WithEntries(entries).
 		WithCreatedAt().
 		WithUpdatedAt().

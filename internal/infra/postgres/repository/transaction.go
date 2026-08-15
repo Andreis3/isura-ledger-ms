@@ -27,11 +27,12 @@ func (r *TransactionRepository) Save(ctx context.Context, data *transaction.Tran
 
 	batch.Queue(`
 		INSERT INTO transactions 
-			(id, idempotency_key, status, amount, currency, created_at, updated_at) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			(id, idempotency_key, status, operation, amount, currency, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		transactionModel.ID,
 		transactionModel.IdempotencyKey,
 		transactionModel.Status,
+		transactionModel.Operation,
 		transactionModel.Amount,
 		transactionModel.Currency,
 		transactionModel.CreatedAt,
@@ -81,6 +82,7 @@ func (r *TransactionRepository) Find(ctx context.Context, params criteria.Transa
 		    idempotency_key, 
 		    status,
 		    amount,
+		    operation,
 		    currency,
 		    created_at, 
 		    updated_at	

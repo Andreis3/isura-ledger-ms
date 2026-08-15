@@ -94,6 +94,10 @@ func (m Money) IsSufficientBalance(other Money) bool {
 	return m.amount >= other.amount && m.currency == other.currency
 }
 
+func (c Currency) Mismatch(other Currency) bool {
+	return c != other
+}
+
 func (m Money) String() string {
 	units := m.amount / 100
 	cents := m.amount % 100
