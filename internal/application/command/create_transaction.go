@@ -12,6 +12,7 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/application/event"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/outbox"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/transaction"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
@@ -154,26 +155,26 @@ func (c *CreateTransaction) Execute(ctx context.Context, input dto.CreateTransac
 
 		txCurrency := entityTransaction.Amount.Currency()
 
-		if debitAccount.Currency.Mismatch(txCurrency) {
-			errMismatch := errors.New(string("currency mismatch: account currency " + debitAccount.Currency + " does not match transaction currency " + txCurrency))
-			span.RecordError(errMismatch)
-			c.log.CriticalJSON("CreateTransaction failed due to currency mismatch",
-				append([]any{
-					slog.String("trace_id", tracerID)},
-					fault.Attrs(fault.ErrCurrencyMismatch(errMismatch))...)...,
-			)
-			return fault.ErrCurrencyMismatch(errMismatch)
+		validateCurrency := func(accountType string, accCurrency money.Currency) error {
+			if accCurrency.Mismatch(txCurrency) {
+				errMismatch := errors.New("currency mismatch: " + accountType + " currency " + string(accCurrency) + " does not match transaction currency " + string(txCurrency))
+				domainErr := fault.ErrCurrencyMismatch(errMismatch)
+				span.RecordError(domainErr)
+				c.log.CriticalJSON("CreateTransaction failed due to currency mismatch",
+					append([]any{
+						slog.String("trace_id", tracerID)},
+						fault.Attrs(domainErr)...)...,
+				)
+				return domainErr
+			}
+			return nil
 		}
 
-		if creditAccount.Currency.Mismatch(txCurrency) {
-			errMismatch := errors.New(string("currency mismatch: account currency " + creditAccount.Currency + " does not match transaction currency " + txCurrency))
-			span.RecordError(errMismatch)
-			c.log.CriticalJSON("CreateTransaction failed due to currency mismatch",
-				append([]any{
-					slog.String("trace_id", tracerID)},
-					fault.Attrs(fault.ErrCurrencyMismatch(errMismatch))...)...,
-			)
-			return fault.ErrCurrencyMismatch(errMismatch)
+		if err := validateCurrency("debit account", debitAccount.Currency); err != nil {
+			return err
+		}
+		if err := validateCurrency("credit account", creditAccount.Currency); err != nil {
+			return err
 		}
 
 		// Associate internal account ID and transaction ID by iterating through entries
