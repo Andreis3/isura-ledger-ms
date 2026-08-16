@@ -3,6 +3,8 @@ package outbox
 import (
 	"context"
 	"time"
+
+	"github.com/andreis3/isura-ledger-ms/internal/domain/entity"
 )
 
 type UpdateOutboxData struct {
@@ -13,6 +15,6 @@ type UpdateOutboxData struct {
 }
 type Repository interface {
 	Save(ctx context.Context, outbox *Outbox) error
-	FindAllByStatusForUpdateSkipLocked(ctx context.Context, status StatusOutbox, limit int) ([]*Outbox, error)
-	UpdateOutboxData(ctx context.Context, outboxID OutboxID, data UpdateOutboxData) error
+	FindAll(ctx context.Context, status StatusOutbox, limit int) ([]*Outbox, error)
+	UpdateOutboxData(ctx context.Context, outboxID entity.ID, data UpdateOutboxData) error
 }

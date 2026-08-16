@@ -9,7 +9,7 @@ import (
 type CreateAccountInput struct {
 	AccountExternalID string `json:"account_external_id"`
 	AccountNumber     string `json:"account_number"`
-	TaxID             string `json:"tax_id" sensitive:"partial"`
+	TaxID             string `json:"tax_id"`
 	AccountType       string `json:"account_type"`
 	Currency          string `json:"currency"`
 }
@@ -19,7 +19,6 @@ type CreateAccountOutput struct {
 }
 
 func (d *CreateAccountInput) CreateAccountFacade() (*account.Account, error) {
-
 	return account.NewAccountBuilder().
 		WithID().
 		WithAccountExternalID(d.AccountExternalID).

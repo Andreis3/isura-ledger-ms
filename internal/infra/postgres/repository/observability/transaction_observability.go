@@ -6,6 +6,7 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/transaction"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 )
 
 type ObservabilityTransactionRepo struct {
@@ -45,8 +46,8 @@ func (r *ObservabilityTransactionRepo) Save(ctx context.Context, data *transacti
 	return nil
 }
 
-func (r *ObservabilityTransactionRepo) FindByID(ctx context.Context, transactionID transaction.TransactionID) (*transaction.Transaction, error) {
-	ctx, span := r.tracer.Start(ctx, "TransactionRepository.FindByID")
+func (r *ObservabilityTransactionRepo) Find(ctx context.Context, params criteria.TransactionCriteria) (*transaction.Transaction, error) {
+	ctx, span := r.tracer.Start(ctx, "TransactionRepository.Find")
 	defer span.End()
 
 	start := time.Now()
@@ -54,37 +55,14 @@ func (r *ObservabilityTransactionRepo) FindByID(ctx context.Context, transaction
 		r.metric.RecordDBQueryDuration(
 			"postgres",
 			"transactions",
-			"find_by_id",
+			"find",
 			float64(time.Since(start).Milliseconds()))
 	}()
 
-	transactionResponse, err := r.repo.FindByID(ctx, transactionID)
+	transactionResponse, err := r.repo.Find(ctx, params)
 
 	if err != nil {
 
-		return nil, err
-	}
-
-	return transactionResponse, nil
-}
-
-func (r *ObservabilityTransactionRepo) FindByIdempotencyKey(ctx context.Context, idempotencyKey string) (*transaction.Transaction, error) {
-	ctx, span := r.tracer.Start(ctx, "TransactionRepository.FindByIdempotencyKey")
-	defer span.End()
-
-	start := time.Now()
-	defer func() {
-		r.metric.RecordDBQueryDuration(
-			"postgres",
-			"transactions",
-			"find_by_idempotency_key",
-			float64(time.Since(start).Milliseconds()))
-	}()
-
-	transactionResponse, err := r.repo.FindByIdempotencyKey(ctx, idempotencyKey)
-
-	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 

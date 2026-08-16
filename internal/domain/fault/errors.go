@@ -48,6 +48,15 @@ func InvalidEntityError(err error, fields map[string]any) *DomainError {
 	}
 }
 
+func ErrCurrencyMismatch(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		Cause:           err,
+		FriendlyMessage: err.Error(),
+		Origin:          CallerName(2),
+	}
+}
+
 /***************UOW Errors****************/
 func BeginTransactionError(err error) *DomainError {
 	return &DomainError{
@@ -95,5 +104,25 @@ func ErrorJSON(err error) *DomainError {
 		Code:            CodeBadRequest,
 		FriendlyMessage: "json unmarshal type error",
 		Cause:           err,
+	}
+}
+
+/******************Money errors *************/
+func InvalidAmountError(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		FriendlyMessage: "Invalid amount",
+		Cause:           err,
+		Origin:          CallerName(2),
+	}
+}
+
+func InvalidCurrencyError(err error, fields map[string]any) *DomainError {
+	return &DomainError{
+		Code:            CodeBadRequest,
+		FriendlyMessage: "Invalid currency",
+		Cause:           err,
+		Origin:          CallerName(2),
+		Fields:          fields,
 	}
 }

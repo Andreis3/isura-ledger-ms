@@ -5,22 +5,31 @@ import (
 )
 
 type AccountCriteria struct {
-	AccountExternalID *string
-	TaxID             *string
-	AccountNumber     *string
-	Currency          *string
-	Type              *string
+	ID                   *string
+	AccountExternalID    *string
+	TaxID                *string
+	AccountNumber        *string
+	Currency             *string
+	Type                 *string
+	HasForUpdateSkipLock bool
 }
 
-func GetCriteria(baseQuery string, params AccountCriteria) (string, []any) {
+func GetAccountCriteria(baseQuery string, params AccountCriteria) (string, []any) {
 	// Pre-allocates the slice with the maximum capacity of arguments (5 filters + slack)
-	args := make([]any, 0, 5)
+	args := make([]any, 0, 7)
 	argCount := 1
 
 	// Estimates the approximate size of the query to avoid reallocations in the Builder
 	var sb strings.Builder
 	sb.Grow(len(baseQuery) + 128)
 	sb.WriteString(baseQuery)
+
+	if params.ID != nil {
+		sb.WriteString(" AND id = $")
+		sb.WriteString(argNumToString(argCount))
+		args = append(args, *params.ID)
+		argCount++
+	}
 
 	if params.AccountExternalID != nil {
 		sb.WriteString(" AND account_external_id = $")
@@ -57,6 +66,10 @@ func GetCriteria(baseQuery string, params AccountCriteria) (string, []any) {
 		argCount++
 	}
 
+	if params.HasForUpdateSkipLock {
+		sb.WriteString(" FOR UPDATE SKIP LOCKED")
+	}
+
 	sb.WriteString(" LIMIT 1")
 
 	return sb.String(), args
@@ -75,6 +88,10 @@ func argNumToString(n int) string {
 		return "4"
 	case 5:
 		return "5"
+	case 6:
+		return "6"
+	case 7:
+		return "7"
 	default:
 		// Fallback in case it exceeds 9 parameters
 		return string(rune('0' + n))
