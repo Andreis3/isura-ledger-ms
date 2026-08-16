@@ -24,14 +24,14 @@ var _ = Describe("INTERNAL :: DOMAIN :: MONEY :: MONEY", func() {
 		Context("error cases", func() {
 			It("should return an error when amount is negative", func() {
 				_, err := money.NewMoney(-1, money.BRL)
-				Expect(err).NotTo(BeNil())
-				Expect(err).To(Equal(money.ErrNegativeAmount))
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("amount must be greater than zero"))
 			})
 
 			It("should return an error when currency is invalid", func() {
 				_, err := money.NewMoney(100, "INVALID")
-				Expect(err).NotTo(BeNil())
-				Expect(err).To(Equal(money.ErrInvalidCurrency))
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("invalid currency"))
 			})
 		})
 	})

@@ -107,7 +107,6 @@ func (c *CreateTransaction) Execute(ctx context.Context, input dto.CreateTransac
 
 		// 2. Search with SELECT FOR UPDATE from TX
 		// Here we guarantee that the balance read is the "last truth" and no one touches it until the commit
-
 		_, err := c.accountRepository.FindAccount(ctxTx, criteria.AccountCriteria{
 			AccountExternalID:    firstID,
 			HasForUpdateSkipLock: true,

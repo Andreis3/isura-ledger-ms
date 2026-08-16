@@ -155,14 +155,14 @@ func (b *TransactionBuilder) WithEntries(entries []*Entry) *TransactionBuilder {
 		return b
 	}
 
-	if entries[0].Direction == entries[1].Direction {
-		b.eval.CheckField(false, "entries", "duplicate entry direction: entries must have opposite directions (debit and credit)")
-		return b
-	}
+	if len(entries) == 2 {
+		if entries[0].Direction == entries[1].Direction {
+			b.eval.CheckField(false, "entries", "duplicate entry direction: entries must have opposite directions (debit and credit)")
+		}
 
-	if entries[0].Amount != entries[1].Amount {
-		b.eval.CheckField(false, "entries", "different amount")
-		return b
+		if !entries[0].Amount.Equal(entries[1].Amount) {
+			b.eval.CheckField(false, "entries", "different amount")
+		}
 	}
 
 	b.entries = entries
