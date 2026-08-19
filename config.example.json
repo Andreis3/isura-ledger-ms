@@ -9,6 +9,10 @@
       "port": "xxx"
     }
   },
+  "nats": {
+    "url": "xxxx",
+    "stream_name": "isura-ledger"
+  },
   "data_base": {
     "postgres": {
       "host": "localhost",

@@ -84,7 +84,7 @@ func InitOtelTracer(ctx context.Context, cfg *configs.Configs) (application.Trac
 
 	provider := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter,
-			// Fine-tune the batch processor to relieve queue contention
+			// Fine-tune the batch processor to relieve event contention
 			sdktrace.WithMaxQueueSize(4096),
 			sdktrace.WithMaxExportBatchSize(512),
 		),

@@ -9,12 +9,14 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/event"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 )
 
 type CreateAccount struct {
 	accountRepository account.Repository
+	natsPublihser     event.Publisher
 	log               application.Logger
 	tracer            application.Tracer
 	metrics           application.Metrics
@@ -22,12 +24,14 @@ type CreateAccount struct {
 
 func NewCreateAccount(
 	accountRepository account.Repository,
+	natsPublihser event.Publisher,
 	log application.Logger,
 	tracer application.Tracer,
 	metrics application.Metrics,
 ) *CreateAccount {
 	return &CreateAccount{
 		accountRepository: accountRepository,
+		natsPublihser:     natsPublihser,
 		log:               log,
 		tracer:            tracer,
 		metrics:           metrics,
@@ -115,6 +119,20 @@ func (c *CreateAccount) Execute(ctx context.Context, input dto.CreateAccountInpu
 		slog.String("account_id", accountEntity.ID.String()),
 		slog.String("account_external_id", accountEntity.AccountExternalID),
 	)
+
+	eventAccount := account.NewAccountCreatedEvent(accountEntity.ID.String(), string(accountEntity.Currency))
+
+	err = c.natsPublihser.Publish(ctx, eventAccount)
+	if err != nil {
+		c.log.CriticalJSON("CreateAccount failed to publish",
+			append([]any{
+				slog.String("trace_id", tracerID),
+				slog.String("account_external_id", accountEntity.AccountExternalID)},
+				fault.Attrs(err)...)...,
+		)
+		c.metrics.RecordCommandTotal("CreateAccount", "failure")
+		return nil, err
+	}
 
 	return &dto.CreateAccountOutput{
 		AccountID: new(accountEntity.ID.String()),

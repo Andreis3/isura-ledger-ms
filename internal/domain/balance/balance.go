@@ -5,23 +5,24 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/domain/entity"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/shared"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/validator"
 )
 
 type Balance struct {
+	id        entity.ID
+	accountID string
+	amount    money.Money
+	createdAT time.Time
+	updatedAT time.Time
+}
+
+type BalanceBuilder struct {
 	ID        entity.ID
 	AccountID string
 	Amount    money.Money
 	CreatedAT time.Time
-	UpdatedAt time.Time
-}
-
-type BalanceBuilder struct {
-	id        entity.ID
-	accountID string
-	amount    money.Money
-	createdAt time.Time
-	updatedAt time.Time
+	UpdatedAT time.Time
 	eval      validator.Evaluator
 }
 
@@ -38,7 +39,7 @@ func (b *BalanceBuilder) WithID(id ...string) *BalanceBuilder {
 			b.eval.AddFieldError("id", err.Error())
 		}
 
-		b.id = uuidV7
+		b.ID = uuidV7
 		return b
 	}
 
@@ -46,14 +47,14 @@ func (b *BalanceBuilder) WithID(id ...string) *BalanceBuilder {
 	if err != nil {
 		b.eval.AddFieldError("id", err.Error())
 	}
-	b.id = uuidv7
+	b.ID = uuidv7
 	return b
 }
 
 func (b *BalanceBuilder) WithAccountID(accountID string) *BalanceBuilder {
 	b.eval.CheckField(validator.NotBlank(accountID), "account_id", "cannot be blank")
 	b.eval.CheckField(validator.MatchesUUIDv7(accountID), "account_id", "is not uuid")
-	b.accountID = accountID
+	b.AccountID = accountID
 	return b
 }
 
@@ -62,7 +63,7 @@ func (b *BalanceBuilder) WithAmount(amount int64, currency money.Currency) *Bala
 	if err != nil {
 		b.eval.AddFieldError("amount", err.Error())
 	}
-	b.amount = m
+	b.Amount = m
 	return b
 }
 
@@ -71,10 +72,10 @@ func (b *BalanceBuilder) WithCreatedAt(createdAt ...time.Time) *BalanceBuilder {
 		if !createdAt[0].IsZero() && createdAt[0].After(time.Now()) {
 			b.eval.CheckField(false, "updated_at", "cannot be in the future")
 		}
-		b.createdAt = createdAt[0]
+		b.CreatedAT = createdAt[0]
 		return b
 	}
-	b.updatedAt = time.Now()
+	b.UpdatedAT = time.Now()
 	return b
 }
 
@@ -83,9 +84,41 @@ func (b *BalanceBuilder) WithUpdatedAt(updatedAt ...time.Time) *BalanceBuilder {
 		if !updatedAt[0].IsZero() && updatedAt[0].After(time.Now()) {
 			b.eval.CheckField(false, "updated_at", "cannot be in the future")
 		}
-		b.updatedAt = updatedAt[0]
+		b.UpdatedAT = updatedAt[0]
 		return b
 	}
-	b.updatedAt = time.Now()
+	b.UpdatedAT = time.Now()
 	return b
+}
+
+func (b *BalanceBuilder) Build() (*Balance, error) {
+	now := time.Now()
+
+	return &Balance{
+		id:        b.ID,
+		accountID: b.AccountID,
+		amount:    b.Amount,
+		createdAT: shared.CoalesceTime(b.CreatedAT, now),
+		updatedAT: shared.CoalesceTime(b.UpdatedAT, now),
+	}, nil
+}
+
+func (b *Balance) ID() entity.ID {
+	return b.id
+}
+
+func (b *Balance) AccountID() string {
+	return b.accountID
+}
+
+func (b *Balance) Amount() money.Money {
+	return b.amount
+}
+
+func (b *Balance) CreatedAT() time.Time {
+	return b.createdAT
+}
+
+func (b *Balance) UpdatedAT() time.Time {
+	return b.updatedAT
 }

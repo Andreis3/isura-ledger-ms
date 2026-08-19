@@ -1,5 +1,7 @@
 package fault
 
+import "strings"
+
 /********Repository Errors********/
 func SaveAccountError(err error) *DomainError {
 	return &DomainError{
@@ -7,6 +9,24 @@ func SaveAccountError(err error) *DomainError {
 		FriendlyMessage: "Unexpected server error; please try again later.",
 		Cause:           err,
 		Origin:          CallerName(2),
+	}
+}
+
+func SaveModelError(modelName string, err error) *DomainError {
+	var sb strings.Builder
+	sb.Grow(len(modelName) + len(err.Error()) + 32)
+
+	sb.WriteString("[")
+	sb.WriteString(modelName)
+	sb.WriteString("] database operation failed: ")
+	sb.WriteString(err.Error())
+
+	return &DomainError{
+		Code:             CodeDatabaseError,
+		FriendlyMessage:  "Unexpected server error; please try again later.",
+		Cause:            err,
+		Origin:           CallerName(2),
+		FormattedMessage: sb.String(),
 	}
 }
 
@@ -32,6 +52,15 @@ func SaveAccountAlreadyExistsError(err error) *DomainError {
 	return &DomainError{
 		Code:            CodeAlreadyExists,
 		FriendlyMessage: "Account already exists.",
+		Cause:           err,
+		Origin:          CallerName(2),
+	}
+}
+
+func SaveBalanceAlreadyExistsError(err error) *DomainError {
+	return &DomainError{
+		Code:            CodeAlreadyExists,
+		FriendlyMessage: "Balance already exists.",
 		Cause:           err,
 		Origin:          CallerName(2),
 	}

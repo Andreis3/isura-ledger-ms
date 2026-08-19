@@ -1,10 +1,7 @@
-package event
+package transaction
 
 import (
 	"time"
-
-	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
-	"github.com/andreis3/isura-ledger-ms/internal/domain/transaction"
 )
 
 type TransactionCreated struct {
@@ -75,12 +72,12 @@ func (t *TransactionCreated) Build() *TransactionCreated {
 	}
 }
 
-func TransactionCreatedFacade(entityTransaction transaction.Transaction, data dto.CreateTransactionInput) *TransactionCreated {
+func TransactionCreatedFacade(entityTransaction Transaction, idempotencyKey string, debitAccountID string, creditAccountID string) *TransactionCreated {
 	return NewTransactionCreated().
 		WithTransactionID(entityTransaction.ID.String()).
-		WithIdempotencyKey(*data.IdempotencyKey).
-		WithDebitAccountID(*data.DebitAccountID).
-		WithCreditAccountID(*data.CreditAccountID).
+		WithIdempotencyKey(idempotencyKey).
+		WithDebitAccountID(creditAccountID).
+		WithCreditAccountID(debitAccountID).
 		WithAmount(entityTransaction.Amount.Amount()).
 		WithCurrency(string(entityTransaction.Amount.Currency())).
 		WithStatus(string(entityTransaction.Status)).

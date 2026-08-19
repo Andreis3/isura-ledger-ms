@@ -41,11 +41,13 @@ const (
 // DomainError is the rich domain error.
 // It implements the error interface and is compatible with errors.Is / errors.As / errors.Unwrap.
 type DomainError struct {
-	Code            Code           // Semantic classification
-	FriendlyMessage string         // Safe message to expose to the client
-	Fields          map[string]any // Errors by field (e.g., form validation)
-	Origin          string         // Origin function, filled automatically
-	Cause           error          // Original error preserved (allows wrapping)
+	Code             Code           // Semantic classification
+	FriendlyMessage  string         // Safe message to expose to the client
+	Fields           map[string]any // Errors by field (e.g., form validation)
+	Origin           string         // Origin function, filled automatically
+	Cause            error          // Original error preserved (allows wrapping)
+	FormattedMessage string         // Formated message
+
 }
 
 type ValidationError struct {
@@ -188,6 +190,10 @@ func Attrs(err error) []any {
 		}
 		if de.FriendlyMessage != "" {
 			attrs = append(attrs, slog.String("error_friendly_message", de.FriendlyMessage))
+		}
+
+		if de.FormattedMessage != "" {
+			attrs = append(attrs, slog.String("error_formatted_message", de.FormattedMessage))
 		}
 		return attrs
 	}

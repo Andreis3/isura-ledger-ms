@@ -10,7 +10,6 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/model"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/criteria"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type AccountRepository struct {
@@ -106,12 +105,4 @@ func (r *AccountRepository) FindAccount(ctx context.Context, params criteria.Acc
 	}
 
 	return accDomain, nil
-}
-
-func isUniqueViolation(err error) bool {
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == "23505"
-	}
-	return false
 }
