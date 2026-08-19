@@ -10,6 +10,7 @@ import (
 	"github.com/andreis3/isura-ledger-ms/internal/infra/logger"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/observability"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/queue/nats"
 )
 
 type BaseDeps struct {
@@ -18,6 +19,7 @@ type BaseDeps struct {
 	Prom           *observability.Prometheus
 	Pg             *postgres.Postgres
 	Tracer         application.Tracer
+	Nats           *nats.Nats
 	TracerShutdown func(context.Context) error
 }
 
@@ -47,12 +49,19 @@ func BuildBaseDeps() *BaseDeps {
 		os.Exit(1)
 	}
 
+	nats, err := nats.NewJetStreamConnection(cfg.Nats.URL)
+	if err != nil {
+		log.CriticalText("failed to connect to nats", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+
 	return &BaseDeps{
 		Cfg:            cfg,
 		Log:            log,
 		Prom:           prom,
 		Pg:             pg,
 		Tracer:         tracer,
+		Nats:           nats,
 		TracerShutdown: tracerShutdown,
 	}
 }

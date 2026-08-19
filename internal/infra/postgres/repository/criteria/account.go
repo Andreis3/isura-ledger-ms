@@ -74,26 +74,3 @@ func GetAccountCriteria(baseQuery string, params AccountCriteria) (string, []any
 
 	return sb.String(), args
 }
-
-// Ultra-fast and zero-allocation helper function to convert argument indexes up to 9 to string
-func argNumToString(n int) string {
-	switch n {
-	case 1:
-		return "1"
-	case 2:
-		return "2"
-	case 3:
-		return "3"
-	case 4:
-		return "4"
-	case 5:
-		return "5"
-	case 6:
-		return "6"
-	case 7:
-		return "7"
-	default:
-		// Fallback in case it exceeds 9 parameters
-		return string(rune('0' + n))
-	}
-}

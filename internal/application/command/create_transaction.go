@@ -9,7 +9,6 @@ import (
 
 	"github.com/andreis3/isura-ledger-ms/internal/application"
 	"github.com/andreis3/isura-ledger-ms/internal/application/dto"
-	"github.com/andreis3/isura-ledger-ms/internal/application/event"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/fault"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/money"
@@ -195,7 +194,7 @@ func (c *CreateTransaction) Execute(ctx context.Context, input dto.CreateTransac
 			return err
 		}
 
-		payload, err := json.Marshal(event.TransactionCreatedFacade(*entityTransaction, input))
+		payload, err := json.Marshal(transaction.TransactionCreatedFacade(*entityTransaction, *input.IdempotencyKey, *input.DebitAccountID, *input.CreditAccountID))
 		if err != nil {
 			span.RecordError(err)
 			return err

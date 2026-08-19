@@ -12,6 +12,7 @@ func NewCreateAccountFactory(
 	composeBuild := dependency.NewComposer(baseDeps)
 	accountCommand := command.NewCreateAccount(
 		composeBuild.BuildAccountRepo(),
+		composeBuild.BuildNatsPublisher(),
 		baseDeps.Log,
 		baseDeps.Tracer,
 		baseDeps.Prom,

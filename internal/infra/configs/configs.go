@@ -15,6 +15,7 @@ type Configs struct {
 	Servers         Servers       `mapstructure:"servers"`
 	DataBase        DataBase      `mapstructure:"data_base"`
 	OpenTelemetry   OpemTelemetry `mapstructure:"open_telemetry"`
+	Nats            Nats          `mapstructure:"nats"`
 	Version         string        `mapstructure:"version"`
 }
 
@@ -38,6 +39,10 @@ type OpemTelemetry struct {
 	Host string `mapstructure:"host"`
 }
 
+type Nats struct {
+	URL        string `mapstructure:"url"`
+	StreamName string `mapstructure:"stream_name"`
+}
 type Postgres struct {
 	Host            string        `mapstructure:"host"`
 	Port            int           `mapstructure:"port"`
@@ -95,4 +100,6 @@ func bindEnvs() {
 	_ = viper.BindEnv("data_base.postgres.max_conn_lifetime", "POSTGRES_MAX_CONN_LIFETIME")
 	_ = viper.BindEnv("data_base.postgres.max_conn_idle_time", "POSTGRES_MAX_CONN_IDLE_TIME")
 	_ = viper.BindEnv("open_telemetry.host", "OTEL_HOST")
+	_ = viper.BindEnv("nats.url", "NATS_URL")
+	_ = viper.BindEnv("nats.stream_name", "NATS_STREAM_NAME")
 }

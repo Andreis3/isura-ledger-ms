@@ -2,10 +2,13 @@ package dependency
 
 import (
 	"github.com/andreis3/isura-ledger-ms/internal/domain/account"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/balance"
+	"github.com/andreis3/isura-ledger-ms/internal/domain/event"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/outbox"
 	"github.com/andreis3/isura-ledger-ms/internal/domain/transaction"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository"
 	"github.com/andreis3/isura-ledger-ms/internal/infra/postgres/repository/observability"
+	"github.com/andreis3/isura-ledger-ms/internal/infra/queue/nats"
 )
 
 type Composer struct {
@@ -40,4 +43,16 @@ func (c *Composer) BuildOutboxRepo() outbox.Repository {
 		c.deps.Prom,
 		c.deps.Tracer,
 	)
+}
+
+func (c *Composer) BuildBalance() balance.Repository {
+	return observability.NewObservabilityBalanceRepo(
+		repository.NewBalanceRepository(c.deps.Pg),
+		c.deps.Prom,
+		c.deps.Tracer,
+	)
+}
+
+func (c *Composer) BuildNatsPublisher() event.Publisher {
+	return nats.NewJetStreamPublisher(c.deps.Nats.JS)
 }
