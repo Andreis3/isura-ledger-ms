@@ -1,43 +1,50 @@
 package nats
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
-type Nats struct {
-	JS nats.JetStreamContext
+type ClientNats struct {
+	JS jetstream.JetStream
 }
 
-func NewJetStreamConnection(natsURL string) (*Nats, error) {
+func NewJetStreamConnection(natsURL string) (*ClientNats, error) {
 	nc, err := nats.Connect(natsURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to nats: %w", err)
 	}
 
-	js, err := nc.JetStream()
+	js, err := jetstream.New(nc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create jetstream context: %w", err)
 	}
 
-	// Já garante a criação do Stream assim que conecta
-	if err := SetupStreams(js); err != nil {
-		return nil, fmt.Errorf("failed to setup nats streams: %w", err)
+	ctx := context.Background()
+
+	if err := SetupStreams(ctx, js); err != nil {
+		return nil, err
 	}
 
-	return &Nats{JS: js}, nil
+	return &ClientNats{JS: js}, nil
 }
 
-func SetupStreams(js nats.JetStreamContext) error {
-	// Cria um Stream chamado "LEDGER_EVENTS" que escuta tudo que começa com "ledger.events.>"
-	_, err := js.AddStream(&nats.StreamConfig{
-		Name:     "LEDGER_EVENTS",
-		Subjects: []string{"ledger.events.>"},
-		Storage:  nats.FileStorage, // Salva em disco dentro do container
+func SetupStreams(ctx context.Context, js jetstream.JetStream) error {
+	_, err := js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
+		Name:      "LEDGER_EVENTS",       // Nome padronizado com o Consumer
+		Subjects:  []string{"ledger.>"},  // Captura qualquer evento que comece com ledger.
+		Storage:   jetstream.FileStorage, // Persiste em disco
+		Retention: jetstream.LimitsPolicy,
+		MaxAge:    7 * 24 * time.Hour,
+		Replicas:  1, // 1 réplica para ambiente local/Docker (evita erro de cluster)
+		Discard:   jetstream.DiscardOld,
 	})
-	if err != nil && err != nats.ErrStreamNameAlreadyInUse {
-		return err
+	if err != nil {
+		return fmt.Errorf("failed to create or update stream: %w", err)
 	}
 	return nil
 }

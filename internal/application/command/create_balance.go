@@ -87,7 +87,7 @@ func (c *CreateBalance) Execute(ctx context.Context, input dto.CreateBalanceInpu
 	}
 
 	parmsCriteria := criteria.AccountCriteria{
-		AccountExternalID: new(balanceEntity.AccountID()),
+		ID: new(balanceEntity.AccountID()),
 	}
 
 	existing, err := c.accountRepository.FindAccount(ctx, parmsCriteria)
@@ -113,6 +113,17 @@ func (c *CreateBalance) Execute(ctx context.Context, input dto.CreateBalanceInpu
 		span.RecordError(err)
 		c.metrics.RecordCommandTotal("CreateBalance", "failure")
 		return err
+	}
+
+	if existing == nil {
+		c.log.CriticalJSON("CreateBalance account not found",
+			append([]any{
+				slog.String("trace_id", tracerID),
+				slog.String("account_id", input.AccountID)},
+			))
+		span.RecordError(err)
+		c.metrics.RecordCommandTotal("CreateBalance", "failure")
+		return fault.FindAccountNotFoundError(errors.New("account not found"))
 	}
 
 	c.log.InfoJSON("CreateBalance account found successfully",

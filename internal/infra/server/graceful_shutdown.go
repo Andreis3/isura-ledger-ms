@@ -9,10 +9,14 @@ import (
 	"time"
 
 	"github.com/andreis3/isura-ledger-ms/internal/infra/dependency"
+	"github.com/andreis3/isura-ledger-ms/internal/transport/queue/handler"
 	"golang.org/x/sync/errgroup"
 )
 
-func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, deps *dependency.BaseDeps) {
+func StartServersWithGracefulShutdown(grpcSrv *GRPCServer,
+	httpSrv *HTTPServer,
+	accountConsumer *handler.AccountConsumer,
+	deps *dependency.BaseDeps) {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -61,6 +65,13 @@ func StartServersWithGracefulShutdown(grpcSrv *GRPCServer, httpSrv *HTTPServer, 
 		case err := <-errCh:
 			return err
 		}
+	})
+
+	// Goroutine for the NATS Consumer worker
+	g.Go(func() error {
+		deps.Log.InfoText("Starting NATS AccountConsumer worker...")
+		// O próprio Start vai escutar o ctx.Done() do errgroup para fechar limpo
+		return accountConsumer.Start(ctx)
 	})
 
 	// Waits for all to finish

@@ -19,7 +19,7 @@ type BaseDeps struct {
 	Prom           *observability.Prometheus
 	Pg             *postgres.Postgres
 	Tracer         application.Tracer
-	Nats           *nats.Nats
+	Nats           *nats.ClientNats
 	TracerShutdown func(context.Context) error
 }
 
