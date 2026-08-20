@@ -60,19 +60,20 @@ func (r *BalanceRepository) Save(ctx context.Context, balance *balance.Balance) 
 func (r *BalanceRepository) Find(ctx context.Context, params criteria.BalanceCriteria) (*balance.Balance, error) {
 	db := resolveDB(ctx, r.db)
 
-	query := `
+	baseQuery := `
 		SELECT
 			id,
 			account_id,
 			amount,
-			curency,
+			currency,
 			created_at,
 			updated_at
 		FROM
 		    balances
+		WHERE 1 = 1
 	`
 
-	query, args := criteria.GetBalanceCriteria(query, params)
+	query, args := criteria.GetBalanceCriteria(baseQuery, params)
 	var balanceModel model.Balance
 
 	err := db.QueryRow(ctx, query, args...).Scan(
